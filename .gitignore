@@ -1,0 +1,17 @@
+# SwiftPM
+.build/
+dist/
+DerivedData/
+
+# Xcode（本项目不依赖，但防止误生成文件入库）
+*.xcodeproj
+xcuserdata/
+
+# macOS
+.DS_Store
+Icon?
+
+# 编辑器
+.vscode/
+.idea/
+*.swp
