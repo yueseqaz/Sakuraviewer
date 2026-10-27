@@ -24,6 +24,9 @@ final class PDFViewerModel: ObservableObject {
     weak var pdfView: PDFView?
     let tab: TabDocument
     private var selections: [PDFSelection] = []
+    /// 已加载的文档：PDFView 按需重建（PDFKit 页面层在隐藏容器中不渲染），
+    /// 重新挂载时依赖此引用恢复内容与页码。
+    @Published private(set) var loadedDocument: PDFDocument?
 
     init(tab: TabDocument) {
         self.tab = tab
@@ -46,6 +49,7 @@ final class PDFViewerModel: ObservableObject {
                     self.isLoading = false
                     return
                 }
+                self.loadedDocument = document
                 self.pdfView?.document = document
                 self.pageCount = document.pageCount
                 self.currentPage = 1
@@ -58,7 +62,7 @@ final class PDFViewerModel: ObservableObject {
         }
     }
 
-    private func applyZoomPreference() {
+    func applyZoomPreference() {
         switch AppServices.shared.settings.zoomPreference {
         case .fit: fitToWindow()
         case .actual: pdfView?.scaleFactor = 1.0

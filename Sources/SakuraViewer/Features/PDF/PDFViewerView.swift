@@ -33,6 +33,11 @@ struct PDFCanvasView: NSViewRepresentable {
             coordinator?.model?.syncFromView()
         })
 
+        // 首次创建即挂载文档（从隐藏占位切回时恢复内容）
+        if pdfView.document !== model.loadedDocument {
+            pdfView.document = model.loadedDocument
+        }
+
         return pdfView
     }
 
@@ -40,6 +45,14 @@ struct PDFCanvasView: NSViewRepresentable {
         context.coordinator.model = model
         if model.pdfView !== pdfView {
             model.pdfView = pdfView
+        }
+        // PDFView 按需创建：重新可见时恢复文档、页码与缩放
+        if pdfView.document !== model.loadedDocument {
+            pdfView.document = model.loadedDocument
+            if model.currentPage > 1 {
+                model.goToPage(model.currentPage)
+            }
+            model.applyZoomPreference()
         }
     }
 
@@ -134,7 +147,14 @@ struct PDFViewerView: View {
                             .overlay(alignment: .trailing) { Divider() }
                             .transition(.move(edge: .leading).combined(with: .opacity))
                     }
-                    PDFCanvasView(model: model)
+                    // PDFKit 的页面渲染层在 opacity(0) 的隐藏容器中不提交，
+                    // 因此仅激活标签时挂载 PDFView；文档与页码由 model 保持恢复。
+                    if isActive {
+                        PDFCanvasView(model: model)
+                    } else {
+                        Rectangle()
+                            .fill(Color(nsColor: .underPageBackgroundColor))
+                    }
                 }
                 .accessibilityLabel("PDF 文档：\(tab.title)")
 

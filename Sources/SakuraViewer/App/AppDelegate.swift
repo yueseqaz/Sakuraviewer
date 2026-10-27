@@ -24,11 +24,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     // MARK: 全局键盘路由
 
-    /// 空格：播放/暂停；左右方向键：上一张/下一张、媒体跳转。
-    /// 文本控件获得焦点时不拦截。
+    /// 空格：播放/暂停；左右方向键：上一张/下一张、媒体跳转；⌘W：关闭标签。
+    /// 文本控件获得焦点时不拦截方向键/空格。
     private func installKeyMonitor() {
         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
             guard let self, let window = NSApp.keyWindow, window.isKeyWindow else { return event }
+
+            // ⌘W 始终解释为「关闭标签」，避免与 Window scene 自带的
+            // 「关闭窗口」快捷键冲突导致最后一个标签关闭时整个应用退出。
+            if event.keyCode == 13, // W
+               event.modifierFlags.intersection(.deviceIndependentFlagsMask) == .command {
+                AppServices.shared.workspace.closeCurrent()
+                return nil
+            }
+
             guard !Self.isTextInputActive else { return event }
 
             let router = AppServices.shared.router
