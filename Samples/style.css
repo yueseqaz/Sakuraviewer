@@ -1,0 +1,25 @@
+/* style.css — CSS 语法高亮样例 */
+:root {
+    --sakura-pink: #e6538f;
+    --petal-white: #fff0f5;
+}
+
+.sakura-card {
+    display: flex;
+    align-items: center;
+    padding: 16px 24px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--petal-white), white);
+    box-shadow: 0 4px 16px rgba(230, 83, 143, 0.18);
+}
+
+.sakura-card:hover {
+    transform: translateY(-2px);
+    transition: all 0.2s ease-in-out;
+}
+
+@media (prefers-color-scheme: dark) {
+    .sakura-card {
+        background: #2a1a22;
+    }
+}

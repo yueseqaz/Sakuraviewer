@@ -1,0 +1,20 @@
+# config.yaml — YAML 语法高亮样例
+app:
+  name: Sakura-Viewer
+  version: 0.1.0
+  appearance: system
+
+viewer:
+  default_zoom: fit
+  line_numbers: true
+  wrap: true
+  fonts:
+    code: "SF Mono"
+    size: 13
+
+media:
+  autoplay: true
+  loop: false
+  playlist: sibling
+
+recent_files_limit: 10

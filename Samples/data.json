@@ -1,0 +1,15 @@
+{
+  "name": "Sakura-Viewer",
+  "version": "0.1.0",
+  "supported": ["image", "video", "audio", "pdf", "code", "text", "markdown"],
+  "native": true,
+  "dependencies": [],
+  "metadata": {
+    "petals": 5,
+    "bloom": "spring",
+    "colors": {
+      "primary": "#E6538F",
+      "soft": "#FFF0F5"
+    }
+  }
+}
