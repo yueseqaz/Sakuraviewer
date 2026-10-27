@@ -29,7 +29,8 @@ struct TextViewerCoreView: View {
         content
             .toolbar { toolbar }
             .onAppear {
-                if model.attributed.length == 0 && tab.status != .loading {
+                // TabDocument 初始状态即 .loading，此处以内容为依据触发首次加载
+                if model.attributed.length == 0 {
                     model.load()
                 }
                 registerRouter()

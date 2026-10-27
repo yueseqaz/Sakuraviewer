@@ -114,6 +114,17 @@ struct TextViewCanvas: NSViewRepresentable {
             if !force, hash == appliedTextHash, textView.textStorage?.length == model.attributed.length { return }
             appliedTextHash = hash
             textView.textStorage?.setAttributedString(model.attributed)
+            // 文本内容变化后重算 documentView 尺寸（否则初始 frame 为 0，滚动区域为空）
+            if model.wrapEnabled {
+                textView.isVerticallyResizable = true
+                textView.isHorizontallyResizable = false
+                textView.autoresizingMask = [.width]
+            } else {
+                textView.isVerticallyResizable = true
+                textView.isHorizontallyResizable = true
+                textView.autoresizingMask = []
+            }
+            textView.sizeToFit()
             matches = []
             ruler?.invalidateCaches()
             if let appliedQuery, !appliedQuery.isEmpty {
@@ -133,15 +144,20 @@ struct TextViewCanvas: NSViewRepresentable {
                 container.widthTracksTextView = true
                 container.size = NSSize(width: scrollView.contentSize.width, height: .greatestFiniteMagnitude)
                 container.containerSize = NSSize(width: scrollView.contentSize.width, height: .greatestFiniteMagnitude)
+                textView.isHorizontallyResizable = false
+                textView.autoresizingMask = [.width]
             } else {
                 container.widthTracksTextView = false
                 let infinite = CGFloat.greatestFiniteMagnitude
                 container.size = NSSize(width: infinite, height: infinite)
                 container.containerSize = NSSize(width: infinite, height: infinite)
-                textView.frame = NSRect(origin: .zero, size: NSSize(width: textView.attributedString().size().width + 40, height: textView.frame.height))
+                textView.isHorizontallyResizable = true
+                textView.autoresizingMask = []
             }
+            textView.isVerticallyResizable = true
             textView.needsLayout = true
             textView.layoutManager?.ensureLayout(for: container)
+            textView.sizeToFit()
             textView.scrollToVisible(NSRect(x: 0, y: 0, width: 1, height: 1))
         }
 
