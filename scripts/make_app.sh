@@ -8,7 +8,9 @@ CONFIG="${1:?用法: make_app.sh <debug|release> <输出路径.app> [显示名]}
 APP_PATH="${2:?缺少输出路径}"
 DISPLAY_NAME="${3:-Sakuraviewer}"
 APP_NAME="$(basename "$APP_PATH" .app)"
-VERSION="0.1.0"
+# 版本号自动跟随 git 标签（v0.1.1 → 0.1.1），可用 APP_VERSION 覆盖
+VERSION="${APP_VERSION:-$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' || true)}"
+VERSION="${VERSION:-0.1.0}"
 
 # 复用 build.sh 的 SDK 选择逻辑
 if xcode-select -p 2>/dev/null | grep -q "CommandLineTools"; then
