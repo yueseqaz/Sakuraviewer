@@ -12,13 +12,18 @@ public enum FileKind: String, CaseIterable, Codable, Sendable {
     case code
     case plainText
     case office
+    case richText
+    case ebook
+    case archive
+    case font
+    case design
     case unsupported
 
     // MARK: - 扩展名表
 
     public static let imageExtensions: Set<String> = [
         "jpg", "jpeg", "png", "gif", "webp", "heic", "heif", "tiff", "tif",
-        "bmp", "svg", "ico", "icns", "avif", "jp2",
+        "bmp", "svg", "ico", "icns", "avif", "jp2", "dng", "cr2", "cr3", "nef", "arw", "orf", "rw2",
     ]
 
     public static let videoExtensions: Set<String> = [
@@ -32,7 +37,7 @@ public enum FileKind: String, CaseIterable, Codable, Sendable {
     public static let pdfExtensions: Set<String> = ["pdf"]
 
     public static let markdownExtensions: Set<String> = [
-        "md", "markdown", "mdown", "mkd", "mdtxt",
+        "md", "markdown", "mdown", "mkd", "mdtxt", "mdx",
     ]
 
     public static let codeExtensions: Set<String> = [
@@ -43,10 +48,12 @@ public enum FileKind: String, CaseIterable, Codable, Sendable {
         "ini", "lua", "pl", "pm", "r", "m", "mm", "cs", "dart", "scala",
         "clj", "ex", "exs", "hs", "erl", "proto", "gradle", "cmake", "dockerfile",
         "bat", "ps1", "vim", "zig", "v", "nim", "jl", "svelte", "vue", "graphql", "prisma",
+        "drawio", "mmd", "mermaid",
     ]
 
     public static let textExtensions: Set<String> = [
         "txt", "text", "log", "csv", "tsv", "cfg", "conf", "properties", "env", "gitignore", "editorconfig",
+        "srt", "ass", "ssa", "vtt", "lrc", "jsonl", "ndjson",
     ]
 
     /// 文档类格式交给系统默认应用打开（Word / Excel / PowerPoint 或兼容软件）。
@@ -54,6 +61,15 @@ public enum FileKind: String, CaseIterable, Codable, Sendable {
         "doc", "docx", "docm", "xls", "xlsx", "xlsm", "ppt", "pptx", "pptm",
         "odt", "ods", "odp", "pages", "numbers", "key",
     ]
+
+    /// 富文本、电子书、压缩包和设计/字体文件交给 macOS Quick Look 预览。
+    public static let richTextExtensions: Set<String> = ["rtf", "rtfd"]
+    public static let ebookExtensions: Set<String> = ["epub"]
+    public static let archiveExtensions: Set<String> = [
+        "zip", "tar", "gz", "tgz", "bz2", "tbz", "xz", "txz", "7z", "rar", "cab", "iso",
+    ]
+    public static let fontExtensions: Set<String> = ["ttf", "otf", "woff", "woff2"]
+    public static let designExtensions: Set<String> = ["psd", "ai", "sketch", "fig"]
 
     public static let htmlExtensions: Set<String> = ["html", "htm", "xhtml"]
 
@@ -91,6 +107,11 @@ public enum FileKind: String, CaseIterable, Codable, Sendable {
         if codeExtensions.contains(ext) { return .code }
         if textExtensions.contains(ext) { return .plainText }
         if officeExtensions.contains(ext) { return .office }
+        if richTextExtensions.contains(ext) { return .richText }
+        if ebookExtensions.contains(ext) { return .ebook }
+        if archiveExtensions.contains(ext) { return .archive }
+        if fontExtensions.contains(ext) { return .font }
+        if designExtensions.contains(ext) { return .design }
         return nil
     }
 
@@ -140,6 +161,11 @@ public enum FileKind: String, CaseIterable, Codable, Sendable {
         case .code: return "代码"
         case .plainText: return "文本"
         case .office: return "Office"
+        case .richText: return "富文本"
+        case .ebook: return "电子书"
+        case .archive: return "压缩包"
+        case .font: return "字体"
+        case .design: return "设计文件"
         case .unsupported: return "不支持"
         }
     }
@@ -156,6 +182,11 @@ public enum FileKind: String, CaseIterable, Codable, Sendable {
         case .code: return "curlybraces.square"
         case .plainText: return "doc.plaintext"
         case .office: return "doc.on.doc"
+        case .richText: return "doc.richtext"
+        case .ebook: return "book"
+        case .archive: return "archivebox"
+        case .font: return "textformat"
+        case .design: return "scribble"
         case .unsupported: return "questionmark.square.dashed"
         }
     }
@@ -183,6 +214,19 @@ public enum FileKind: String, CaseIterable, Codable, Sendable {
         case .code: return [.sourceCode, .json, .html, .xml, .yaml].compactMap { $0 }
         case .plainText: return [.text, .plainText, .utf8PlainText, .commaSeparatedText].compactMap { $0 }
         case .office: return [.data]
+        case .richText: return [UTType.rtf, .data].compactMap { $0 }
+        case .ebook, .archive, .font, .design:
+            // Not every macOS SDK exposes a named UTType for these formats.
+            // Filename-based types keep the open panel compatible across SDKs.
+            let extensions: Set<String>
+            switch self {
+            case .ebook: extensions = Self.ebookExtensions
+            case .archive: extensions = Self.archiveExtensions
+            case .font: extensions = Self.fontExtensions
+            case .design: extensions = Self.designExtensions
+            default: extensions = []
+            }
+            return extensions.compactMap { UTType(filenameExtension: $0) } + [.data]
         case .unsupported: return [.data]
         }
     }

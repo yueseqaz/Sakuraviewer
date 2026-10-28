@@ -56,7 +56,7 @@ struct EmptyStateView: View {
             }
 
             VStack(spacing: 4) {
-                Text("将文件拖入窗口即可打开 · 支持图片、视频、音频、PDF、代码、文本与 Markdown")
+                Text("支持图片、视频、音频、PDF、HTML、Markdown、Office、电子书与压缩包")
                     .font(.caption)
                     .foregroundColor(.secondary)
                 Text("⌘O 打开文件 · ⌘⇧O 打开文件夹 · 空格播放/暂停")

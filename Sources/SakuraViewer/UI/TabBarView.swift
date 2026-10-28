@@ -36,7 +36,6 @@ struct TabBarView: View {
 private struct TabCellView: View {
 
     @EnvironmentObject private var workspace: WorkspaceModel
-    @EnvironmentObject private var services: AppServices
     @ObservedObject var tab: TabDocument
     let isSelected: Bool
 
@@ -95,10 +94,6 @@ private struct TabCellView: View {
             Button("拷贝文件路径") {
                 NSPasteboard.general.clearContents()
                 NSPasteboard.general.setString(tab.currentURL.path, forType: .string)
-            }
-            Divider()
-            Button(services.favorites.isFavorite(tab.currentURL) ? "取消收藏" : "收藏") {
-                services.favorites.toggle(tab.currentURL)
             }
         }
         .help(tab.currentURL.path)

@@ -37,6 +37,9 @@ enum FileKindTests {
             ("config.yaml", .code), ("query.sql", .code), ("build.sh", .code),
             ("notes.txt", .plainText), ("app.log", .plainText), ("table.csv", .plainText),
             ("report.docx", .office), ("budget.xlsx", .office), ("slides.pptx", .office),
+            ("rich.rtf", .richText), ("book.epub", .ebook), ("bundle.zip", .archive),
+            ("font.otf", .font), ("mockup.psd", .design), ("captions.srt", .plainText),
+            ("component.mdx", .markdown), ("camera.dng", .image), ("diagram.drawio", .code),
         ]
         for (fileName, expected) in cases {
             let url = try tempFile(named: fileName, content: Data("x".utf8))

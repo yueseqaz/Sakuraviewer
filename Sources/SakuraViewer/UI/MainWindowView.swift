@@ -101,7 +101,6 @@ struct MainWindowView: View {
 
         ToolbarItemGroup(placement: .primaryAction) {
             if let tab = workspace.selectedTab {
-                favoriteButton(for: tab)
                 Button {
                     tab.refresh()
                 } label: {
@@ -111,19 +110,6 @@ struct MainWindowView: View {
                 .accessibilityLabel("刷新")
             }
         }
-    }
-
-    private func favoriteButton(for tab: TabDocument) -> some View {
-        let isFavorite = services.favorites.isFavorite(tab.currentURL)
-        return Button {
-            let added = services.favorites.toggle(tab.currentURL)
-            _ = added
-        } label: {
-            Image(systemName: isFavorite ? "star.fill" : "star")
-                .foregroundColor(isFavorite ? .orange : .primary)
-        }
-        .help(isFavorite ? "取消收藏" : "收藏")
-        .accessibilityLabel(isFavorite ? "取消收藏" : "收藏")
     }
 
     // MARK: 拖拽覆盖层
@@ -242,6 +228,10 @@ struct TabContentView: View {
             TextViewerView(tab: tab, isActive: isActive)
         case .office:
             OfficeViewerView(tab: tab, isActive: isActive)
+        case .archive:
+            ArchiveViewerView(tab: tab, isActive: isActive)
+        case .richText, .ebook, .font, .design:
+            QuickLookViewerView(tab: tab, isActive: isActive)
         case .unsupported:
             UnsupportedViewerView(tab: tab, isActive: isActive)
         }

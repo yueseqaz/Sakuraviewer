@@ -25,6 +25,11 @@ enum SakuraTheme {
         case .code: return .indigo
         case .plainText: return .gray
         case .office: return .blue
+        case .richText: return .teal
+        case .ebook: return .brown
+        case .archive: return .purple
+        case .font: return .indigo
+        case .design: return .pink
         case .unsupported: return .secondary
         }
     }

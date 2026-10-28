@@ -13,7 +13,6 @@ final class AppServices: ObservableObject {
     let workspace = WorkspaceModel()
     let router = ViewerRouter()
     let recents: RecentFilesStore
-    let favorites = FavoritesStore()
     let folders = FolderLibraryStore()
     let session = SessionStore()
     let settings: AppSettings

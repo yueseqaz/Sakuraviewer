@@ -28,10 +28,10 @@ public enum CodeLanguage: String, CaseIterable, Sendable {
         case "css", "scss", "less": return .css
         case "json", "jsonc": return .json
         case "yaml", "yml", "toml": return .yaml
-        case "xml", "plist", "svg", "xsl": return .xml
+        case "xml", "plist", "svg", "xsl", "drawio": return .xml
         case "sh", "bash", "zsh", "fish", "bat", "ps1": return .shell
         case "sql": return .sql
-        case "md", "markdown": return .markdown
+        case "md", "markdown", "mdx": return .markdown
         default: return nil
         }
     }

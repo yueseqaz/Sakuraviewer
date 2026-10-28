@@ -142,11 +142,6 @@ private struct SidebarTreeRow: View {
             Button("在 Finder 中显示") {
                 NSWorkspace.shared.activateFileViewerSelecting([node.url])
             }
-            if !node.isDirectory {
-                Button(services.favorites.isFavorite(node.url) ? "取消收藏" : "添加到收藏") {
-                    _ = services.favorites.toggle(node.url)
-                }
-            }
         }
         .help(node.url.path)
         .accessibilityElement(children: .ignore)

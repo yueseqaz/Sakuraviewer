@@ -30,6 +30,8 @@ struct TextViewCanvas: NSViewRepresentable {
         textView.usesFindBar = false
         textView.isIncrementalSearchingEnabled = false
         textView.textContainerInset = NSSize(width: 0, height: 12)
+        textView.minSize = NSSize(width: 0, height: 0)
+        textView.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
         textView.drawsBackground = true
         textView.backgroundColor = .textBackgroundColor
         textView.selectedTextAttributes = [.backgroundColor: NSColor.selectedTextBackgroundColor]
@@ -85,7 +87,7 @@ struct TextViewCanvas: NSViewRepresentable {
         // 等宽字体同步
         if !model.wrapEnabled, coordinator.lastContainerWidth != scrollView.contentSize.width {
             coordinator.lastContainerWidth = scrollView.contentSize.width
-            coordinator.applyWrap()
+            coordinator.applyWrap(force: true)
         }
     }
 
@@ -130,7 +132,7 @@ struct TextViewCanvas: NSViewRepresentable {
                 textView.isHorizontallyResizable = true
                 textView.autoresizingMask = []
             }
-            textView.sizeToFit()
+            updateDocumentFrame()
             matches = []
             ruler?.invalidateCaches()
             if let appliedQuery, !appliedQuery.isEmpty {
@@ -140,10 +142,10 @@ struct TextViewCanvas: NSViewRepresentable {
 
         // MARK: 换行
 
-        func applyWrap() {
+        func applyWrap(force: Bool = false) {
             guard let textView, let scrollView, let model else { return }
             let wrap = model.wrapEnabled
-            guard appliedWrap != wrap || wrap == false else { return }
+            guard force || appliedWrap != wrap else { return }
             appliedWrap = wrap
             guard let container = textView.textContainer else { return }
             if wrap {
@@ -163,8 +165,22 @@ struct TextViewCanvas: NSViewRepresentable {
             textView.isVerticallyResizable = true
             textView.needsLayout = true
             textView.layoutManager?.ensureLayout(for: container)
-            textView.sizeToFit()
+            updateDocumentFrame()
             textView.scrollToVisible(NSRect(x: 0, y: 0, width: 1, height: 1))
+        }
+
+        /// NSTextView starts with a zero-sized frame when embedded in SwiftUI.
+        /// Keep its document height in sync with TextKit's used rect so the
+        /// enclosing NSScrollView can always reach the final line.
+        private func updateDocumentFrame() {
+            guard let textView, let scrollView, let container = textView.textContainer,
+                  let layoutManager = textView.layoutManager else { return }
+            layoutManager.ensureLayout(for: container)
+            let used = layoutManager.usedRect(for: container)
+            let inset = textView.textContainerInset
+            let width = max(scrollView.contentSize.width, used.width + inset.width * 2, 1)
+            let height = max(scrollView.contentSize.height, used.height + inset.height * 2, 1)
+            textView.setFrameSize(NSSize(width: width, height: height))
         }
 
         // MARK: 搜索
