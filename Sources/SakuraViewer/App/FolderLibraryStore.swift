@@ -14,13 +14,23 @@ struct FolderEntry: Identifiable, Codable, Equatable {
     }
 }
 
-/// 文件夹媒体库：记录添加的文件夹并扫描其中支持的文件，按类型分组展示。
+/// A visible node in the sidebar file tree. Empty directories are omitted;
+/// regular files remain visible even when their preview type is unsupported.
+struct FolderTreeNode: Identifiable, Equatable {
+    let url: URL
+    let isDirectory: Bool
+    var children: [FolderTreeNode] = []
+
+    var id: URL { url }
+}
+
+/// 文件夹媒体库：记录添加的文件夹并按目录层级展示文件树。
 @MainActor
 final class FolderLibraryStore: ObservableObject {
 
     @Published private(set) var folders: [FolderEntry] = []
-    /// folderURL -> 扫描到的文件
-    @Published private(set) var filesByFolder: [URL: [URL]] = [:]
+    /// folderURL -> 文件树的顶层节点
+    @Published private(set) var treeByFolder: [URL: [FolderTreeNode]] = [:]
 
     private let defaults: UserDefaults
     private static let key = "sakura.folders"
@@ -43,15 +53,15 @@ final class FolderLibraryStore: ObservableObject {
 
     func removeFolder(_ url: URL) {
         folders.removeAll { $0.id == url }
-        filesByFolder.removeValue(forKey: url)
+        treeByFolder.removeValue(forKey: url)
         save()
     }
 
     func rescan(folder url: URL) {
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            let files = Self.scanSupportedFiles(in: url)
+            let tree = Self.scanTree(in: url)
             DispatchQueue.main.async {
-                self?.filesByFolder[url] = files
+                self?.treeByFolder[url] = tree
             }
         }
     }
@@ -62,25 +72,58 @@ final class FolderLibraryStore: ObservableObject {
         }
     }
 
-    /// 递归扫描支持的文件（上限保护）。
-    nonisolated static func scanSupportedFiles(in directory: URL, limit: Int = 4000) -> [URL] {
-        let fm = FileManager.default
-        guard let enumerator = fm.enumerator(
-            at: directory,
-            includingPropertiesForKeys: [.isRegularFileKey],
-            options: [.skipsHiddenFiles, .skipsPackageDescendants]
-        ) else { return [] }
+    /// 扫描文件并保留目录层级（上限保护）。
+    nonisolated static func scanTree(in directory: URL, limit: Int = 4000) -> [FolderTreeNode] {
+        var fileCount = 0
 
-        var results: [URL] = []
-        for case let url as URL in enumerator {
-            if results.count >= limit { break }
-            guard let values = try? url.resourceValues(forKeys: [.isRegularFileKey]),
-                  values.isRegularFile == true else { continue }
-            if FileKind.detect(url: url) != .unsupported {
-                results.append(url)
+        func visit(_ directory: URL) -> [FolderTreeNode] {
+            guard fileCount < limit,
+                  let urls = try? FileManager.default.contentsOfDirectory(
+                    at: directory,
+                    includingPropertiesForKeys: [.isDirectoryKey, .isRegularFileKey],
+                    options: [.skipsHiddenFiles, .skipsPackageDescendants]
+                  ) else { return [] }
+
+            var nodes: [FolderTreeNode] = []
+            for url in urls.sorted(by: Self.fileTreeSort) {
+                guard fileCount < limit,
+                      let values = try? url.resourceValues(forKeys: [.isDirectoryKey, .isRegularFileKey]) else {
+                    continue
+                }
+                if values.isDirectory == true {
+                    let children = visit(url)
+                    if !children.isEmpty {
+                        nodes.append(FolderTreeNode(url: url, isDirectory: true, children: children))
+                    }
+                } else if values.isRegularFile == true {
+                    fileCount += 1
+                    nodes.append(FolderTreeNode(url: url, isDirectory: false))
+                }
+            }
+            return nodes
+        }
+
+        return visit(directory)
+    }
+
+    /// Compatibility helper for callers that only need the flattened file list.
+    nonisolated static func scanSupportedFiles(in directory: URL, limit: Int = 4000) -> [URL] {
+        func flatten(_ nodes: [FolderTreeNode]) -> [URL] {
+            nodes.flatMap { node -> [URL] in
+                if node.isDirectory { return flatten(node.children) }
+                return FileKind.detect(url: node.url) == .unsupported ? [] : [node.url]
             }
         }
-        return results.sorted { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending }
+        return flatten(scanTree(in: directory, limit: limit)).sorted {
+            $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending
+        }
+    }
+
+    private nonisolated static func fileTreeSort(_ lhs: URL, _ rhs: URL) -> Bool {
+        let lhsDirectory = (try? lhs.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) ?? false
+        let rhsDirectory = (try? rhs.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) ?? false
+        if lhsDirectory != rhsDirectory { return lhsDirectory }
+        return lhs.lastPathComponent.localizedStandardCompare(rhs.lastPathComponent) == .orderedAscending
     }
 
     private func load() {
