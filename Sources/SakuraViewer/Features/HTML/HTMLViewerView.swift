@@ -85,13 +85,16 @@ private final class HTMLViewModel: ObservableObject {
     weak var webView: WKWebView?
 
     func attach(_ webView: WKWebView) {
+        guard self.webView !== webView else { return }
         self.webView = webView
         updateNavigationState()
     }
 
     func updateNavigationState() {
-        canGoBack = webView?.canGoBack ?? false
-        canGoForward = webView?.canGoForward ?? false
+        let back = webView?.canGoBack ?? false
+        let forward = webView?.canGoForward ?? false
+        if canGoBack != back { canGoBack = back }
+        if canGoForward != forward { canGoForward = forward }
     }
 
     func goBack() { webView?.goBack(); updateNavigationState() }
