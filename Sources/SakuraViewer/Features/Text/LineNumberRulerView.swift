@@ -7,6 +7,7 @@ final class LineNumberRulerView: NSRulerView {
     /// 每一行的起始字符位置，滚动时用二分查找而不是从上一个锚点线性扫描。
     private var lineStarts: [Int] = [0]
     private var lineStartsLength = -1
+    private var scrollObserver: NSObjectProtocol?
 
     func invalidateCaches() {
         lineStarts = [0]
@@ -20,8 +21,30 @@ final class LineNumberRulerView: NSRulerView {
         ruleThickness = 40
     }
 
+    func observeScrollView(_ scrollView: NSScrollView) {
+        guard scrollObserver == nil else { return }
+        let clipView = scrollView.contentView
+        if clipView.postsBoundsChangedNotifications == false {
+            clipView.postsBoundsChangedNotifications = true
+        }
+        scrollObserver = NotificationCenter.default.addObserver(
+            forName: NSView.boundsDidChangeNotification,
+            object: clipView,
+            queue: .main
+        ) { [weak self] _ in
+            // NSRulerView 不总会因反向滚动自动失效，主动重绘可见行号。
+            self?.setNeedsDisplay(self?.visibleRect ?? .zero)
+        }
+    }
+
     required init(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+
+    deinit {
+        if let scrollObserver {
+            NotificationCenter.default.removeObserver(scrollObserver)
+        }
     }
 
     override func drawHashMarksAndLabels(in rect: NSRect) {

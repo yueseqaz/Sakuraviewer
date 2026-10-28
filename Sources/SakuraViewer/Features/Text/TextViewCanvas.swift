@@ -42,6 +42,7 @@ struct TextViewCanvas: NSViewRepresentable {
         scrollView.rulersVisible = true
 
         scrollView.documentView = textView
+        ruler.observeScrollView(scrollView)
 
         let coordinator = context.coordinator
         coordinator.scrollView = scrollView
