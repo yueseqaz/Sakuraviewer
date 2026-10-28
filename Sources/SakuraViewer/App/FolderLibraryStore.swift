@@ -22,6 +22,9 @@ struct FolderTreeNode: Identifiable, Equatable {
     var children: [FolderTreeNode] = []
 
     var id: URL { url }
+
+    /// OutlineGroup uses nil to represent a leaf node.
+    var outlineChildren: [FolderTreeNode]? { children.isEmpty ? nil : children }
 }
 
 /// 文件夹媒体库：记录添加的文件夹并按目录层级展示文件树。
