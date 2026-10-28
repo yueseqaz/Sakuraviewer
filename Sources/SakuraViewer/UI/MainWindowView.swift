@@ -232,12 +232,16 @@ struct TabContentView: View {
             AudioViewerView(tab: tab, isActive: isActive)
         case .pdf:
             PDFViewerView(tab: tab, isActive: isActive)
+        case .html:
+            HTMLViewerView(tab: tab, isActive: isActive)
         case .code:
             CodeViewerView(tab: tab, isActive: isActive)
         case .markdown:
             MarkdownViewerView(tab: tab, isActive: isActive)
         case .plainText:
             TextViewerView(tab: tab, isActive: isActive)
+        case .office:
+            OfficeViewerView(tab: tab, isActive: isActive)
         case .unsupported:
             UnsupportedViewerView(tab: tab, isActive: isActive)
         }

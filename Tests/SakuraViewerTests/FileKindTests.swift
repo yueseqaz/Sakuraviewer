@@ -33,9 +33,10 @@ enum FileKindTests {
             ("readme.md", .markdown), ("notes.markdown", .markdown),
             ("main.swift", .code), ("app.js", .code), ("script.ts", .code),
             ("app.py", .code), ("main.go", .code), ("lib.rs", .code),
-            ("index.html", .code), ("style.css", .code), ("data.json", .code),
+            ("index.html", .html), ("page.xhtml", .html), ("style.css", .code), ("data.json", .code),
             ("config.yaml", .code), ("query.sql", .code), ("build.sh", .code),
             ("notes.txt", .plainText), ("app.log", .plainText), ("table.csv", .plainText),
+            ("report.docx", .office), ("budget.xlsx", .office), ("slides.pptx", .office),
         ]
         for (fileName, expected) in cases {
             let url = try tempFile(named: fileName, content: Data("x".utf8))
@@ -44,8 +45,8 @@ enum FileKindTests {
     }
 
     static func displayAndOfficeExtensions() {
-        check(FileKind.displayKind(url: URL(fileURLWithPath: "/tmp/index.html")) == .code,
-              "HTML 文件树展示类型应为代码")
+        check(FileKind.displayKind(url: URL(fileURLWithPath: "/tmp/index.html")) == .html,
+              "HTML 文件树展示类型应为 HTML")
         check(FileKind.isOfficeDocument(URL(fileURLWithPath: "/tmp/report.docx")),
               "DOCX 应识别为 Office 文档")
         check(FileKind.isOfficeDocument(URL(fileURLWithPath: "/tmp/budget.xlsx")),

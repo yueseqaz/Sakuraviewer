@@ -20,9 +20,11 @@ enum SakuraTheme {
         case .video: return .purple
         case .audio: return .blue
         case .pdf: return .red
+        case .html: return .orange
         case .markdown: return .orange
         case .code: return .indigo
         case .plainText: return .gray
+        case .office: return .blue
         case .unsupported: return .secondary
         }
     }

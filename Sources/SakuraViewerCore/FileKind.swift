@@ -7,9 +7,11 @@ public enum FileKind: String, CaseIterable, Codable, Sendable {
     case video
     case audio
     case pdf
+    case html
     case markdown
     case code
     case plainText
+    case office
     case unsupported
 
     // MARK: - 扩展名表
@@ -35,7 +37,7 @@ public enum FileKind: String, CaseIterable, Codable, Sendable {
 
     public static let codeExtensions: Set<String> = [
         "swift", "js", "mjs", "cjs", "ts", "jsx", "tsx", "py", "pyw", "java",
-        "c", "h", "cpp", "cc", "cxx", "hpp", "hh", "go", "rs", "html", "htm", "xhtml",
+        "c", "h", "cpp", "cc", "cxx", "hpp", "hh", "go", "rs",
         "css", "scss", "less", "json", "jsonc", "yaml", "yml", "xml", "plist",
         "sh", "bash", "zsh", "fish", "sql", "rb", "php", "kt", "kts", "toml",
         "ini", "lua", "pl", "pm", "r", "m", "mm", "cs", "dart", "scala",
@@ -52,6 +54,8 @@ public enum FileKind: String, CaseIterable, Codable, Sendable {
         "doc", "docx", "docm", "xls", "xlsx", "xlsm", "ppt", "pptx", "pptm",
         "odt", "ods", "odp", "pages", "numbers", "key",
     ]
+
+    public static let htmlExtensions: Set<String> = ["html", "htm", "xhtml"]
 
     /// 无扩展名但应按文本/代码处理的常见文件名。
     public static let specialFileNames: Set<String> = [
@@ -82,9 +86,11 @@ public enum FileKind: String, CaseIterable, Codable, Sendable {
         if videoExtensions.contains(ext) { return .video }
         if audioExtensions.contains(ext) { return .audio }
         if pdfExtensions.contains(ext) { return .pdf }
+        if htmlExtensions.contains(ext) { return .html }
         if markdownExtensions.contains(ext) { return .markdown }
         if codeExtensions.contains(ext) { return .code }
         if textExtensions.contains(ext) { return .plainText }
+        if officeExtensions.contains(ext) { return .office }
         return nil
     }
 
@@ -129,9 +135,11 @@ public enum FileKind: String, CaseIterable, Codable, Sendable {
         case .video: return "视频"
         case .audio: return "音频"
         case .pdf: return "PDF"
+        case .html: return "HTML"
         case .markdown: return "Markdown"
         case .code: return "代码"
         case .plainText: return "文本"
+        case .office: return "Office"
         case .unsupported: return "不支持"
         }
     }
@@ -143,9 +151,11 @@ public enum FileKind: String, CaseIterable, Codable, Sendable {
         case .video: return "video"
         case .audio: return "music.note"
         case .pdf: return "doc.richtext"
+        case .html: return "globe"
         case .markdown: return "text.below.photo"
         case .code: return "curlybraces.square"
         case .plainText: return "doc.plaintext"
+        case .office: return "doc.on.doc"
         case .unsupported: return "questionmark.square.dashed"
         }
     }
@@ -168,9 +178,11 @@ public enum FileKind: String, CaseIterable, Codable, Sendable {
         case .video: return [.movie, .mpeg4Movie, UTType("com.apple.quicktime-movie")].compactMap { $0 }
         case .audio: return [.audio, .mp3, UTType("org.xiph.flac")].compactMap { $0 }
         case .pdf: return [.pdf]
+        case .html: return [UTType.html, .text, .utf8PlainText].compactMap { $0 }
         case .markdown: return [UTType("net.daringfireball.markdown")].compactMap { $0 }
         case .code: return [.sourceCode, .json, .html, .xml, .yaml].compactMap { $0 }
         case .plainText: return [.text, .plainText, .utf8PlainText, .commaSeparatedText].compactMap { $0 }
+        case .office: return [.data]
         case .unsupported: return [.data]
         }
     }

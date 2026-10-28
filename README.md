@@ -21,10 +21,11 @@
 | 🎬 视频 | mp4 / mov / m4v 等 AVFoundation 可播放格式 | 播放/暂停、进度、音量、循环、播放速度（0.5×–2×）、同目录播放列表、快进快退、原生 AVKit 控制 |
 | 🎵 音频 | mp3 / m4a / aac / wav / flac / aiff / caf | 自定义原生播放界面、频谱律动、播放列表、循环、播放速度（0.5×–2×） |
 | 📄 PDF | pdf | 连续滚动、页码跳转、全文搜索（高亮定位）、缩略图侧栏、缩放 |
-| 💻 代码 | swift / js / ts / py / java / c / cpp / h / go / rs / html / css / json / yaml / xml / sh / sql 等 60+ 扩展名 | 自研语法高亮（亮/暗双主题）、行号、自动换行开关、字号调整、查找、跳转到行（⌘L） |
+| 💻 代码 | swift / js / ts / py / java / c / cpp / h / go / rs / css / json / yaml / xml / sh / sql 等 60+ 扩展名 | 自研语法高亮（亮/暗双主题）、行号、自动换行开关、字号调整、查找、跳转到行（⌘L） |
+| 🌐 HTML | html / htm / xhtml | WebKit 原生渲染，支持本地 CSS / 图片 / 脚本与外部链接 |
 | 📝 文本 | txt / log / csv 等 | UTF-8 / UTF-16LE/BE / GB18030 / Latin-1 编码自动检测、行号、查找 |
 | 📋 Markdown | md / markdown | 原生渲染标题/列表/表格/引用/任务列表/图片/链接，代码块语法高亮，目录侧栏锚点跳转 |
-| 🗂 Office | doc / docx / xls / xlsx / ppt / pptx / odt / ods / odp / pages / numbers / key | 识别后交给系统默认的 Office 兼容应用打开 |
+| 🗂 Office | doc / docx / xls / xlsx / ppt / pptx / odt / ods / odp / pages / numbers / key | Quick Look 原生预览；需要编辑时交给系统默认的 Office 兼容应用 |
 | ❓ 未知 | 其他 | 尽量按文本打开；二进制显示友好提示 + 头部十六进制预览，可一键尝试以文本打开 |
 
 **通用能力**
