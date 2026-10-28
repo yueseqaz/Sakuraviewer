@@ -13,8 +13,12 @@ struct QuickLookViewerView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            QuickLookPreviewView(url: tab.currentURL)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            if isActive {
+                QuickLookPreviewView(url: tab.currentURL)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                Color.clear.frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
 
             Divider()
             HStack(spacing: 10) {

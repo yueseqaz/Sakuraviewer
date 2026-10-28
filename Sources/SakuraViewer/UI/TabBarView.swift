@@ -1,4 +1,5 @@
 import SwiftUI
+import SakuraViewerCore
 
 /// 顶部多标签栏：切换、关闭、右键菜单、按类型的类型图标。
 struct TabBarView: View {
@@ -43,7 +44,7 @@ private struct TabCellView: View {
 
     var body: some View {
         HStack(spacing: 6) {
-            Image(systemName: tab.kind.symbolName)
+            Image(systemName: FileKind.symbolName(for: tab.currentURL))
                 .font(.system(size: 11))
                 .foregroundColor(SakuraTheme.kindColor(tab.kind))
                 .accessibilityHidden(true)

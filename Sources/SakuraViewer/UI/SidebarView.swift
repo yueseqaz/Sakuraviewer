@@ -124,7 +124,6 @@ private struct SidebarTreeRow: View {
     @State private var hovered = false
 
     private var kind: FileKind { FileKind.displayKind(url: node.url) }
-    private var isOffice: Bool { FileKind.isOfficeDocument(node.url) }
     private var isSelected: Bool { workspace.selectedTab?.currentURL == node.url }
 
     var body: some View {
@@ -145,7 +144,7 @@ private struct SidebarTreeRow: View {
         }
         .help(node.url.path)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(node.isDirectory ? "文件夹 \(node.url.lastPathComponent)" : "\(isOffice ? "Office" : kind.displayName)文件 \(node.url.lastPathComponent)")
+        .accessibilityLabel(node.isDirectory ? "文件夹 \(node.url.lastPathComponent)" : "\(kind.displayName)文件 \(node.url.lastPathComponent)")
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 
@@ -158,9 +157,9 @@ private struct SidebarTreeRow: View {
 
     private var fileLabel: some View {
         HStack(spacing: 8) {
-            Image(systemName: isOffice ? "doc.on.doc" : kind.symbolName)
+            Image(systemName: FileKind.symbolName(for: node.url))
                 .font(.system(size: 12))
-                .foregroundColor(isOffice ? .blue : SakuraTheme.kindColor(kind))
+                .foregroundColor(SakuraTheme.kindColor(kind))
                 .frame(width: 15)
             Text(node.url.lastPathComponent)
                 .font(.system(size: 12, weight: isSelected ? .medium : .regular))

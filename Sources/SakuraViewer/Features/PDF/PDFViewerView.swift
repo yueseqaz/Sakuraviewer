@@ -112,7 +112,7 @@ struct PDFViewerView: View {
         content
             .toolbar { toolbar }
             .onAppear {
-                if model.pdfView == nil || model.pageCount == 0 {
+                if isActive, (model.pdfView == nil || model.pageCount == 0) {
                     model.loadDocument()
                 }
                 registerRouter()
@@ -121,7 +121,10 @@ struct PDFViewerView: View {
                 services.router.unregister(tab.id)
             }
             .onChange(of: tab.reloadToken) { _ in
-                model.loadDocument()
+                if isActive { model.loadDocument() }
+            }
+            .onChange(of: isActive) { active in
+                if active, (model.pdfView == nil || model.pageCount == 0) { model.loadDocument() }
             }
     }
 

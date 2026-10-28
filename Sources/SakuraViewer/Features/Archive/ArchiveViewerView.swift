@@ -50,10 +50,15 @@ struct ArchiveViewerView: View {
             }
         }
         .onAppear {
-            tab.status = .loading
-            loadEntries()
+            if isActive {
+                tab.status = .loading
+                loadEntries()
+            }
         }
-        .onChange(of: tab.reloadToken) { _ in loadEntries() }
+        .onChange(of: tab.reloadToken) { _ in if isActive { loadEntries() } }
+        .onChange(of: isActive) { active in
+            if active { loadEntries() }
+        }
     }
 
     private func loadEntries() {

@@ -4,14 +4,13 @@ import AppKit
 final class LineNumberRulerView: NSRulerView {
 
     weak var sourceTextView: NSTextView?
-    /// charIndex -> lineNumber 缓存锚点。
-    private var lineCache: [Int: Int] = [0: 1]
-    /// 全文行数缓存（以字符串长度为失效键）。
-    private var totalCache: (length: Int, count: Int)?
+    /// 每一行的起始字符位置，滚动时用二分查找而不是从上一个锚点线性扫描。
+    private var lineStarts: [Int] = [0]
+    private var lineStartsLength = -1
 
     func invalidateCaches() {
-        lineCache = [0: 1]
-        totalCache = nil
+        lineStarts = [0]
+        lineStartsLength = -1
     }
 
     init(textView: NSTextView) {
@@ -41,7 +40,8 @@ final class LineNumberRulerView: NSRulerView {
             forGlyphRange: NSRange(location: visibleGlyphRange.location, length: 0),
             actualGlyphRange: nil
         ).location
-        var lineNumber = lineNumber(forCharacterIndex: firstCharIndex, in: content)
+        prepareLineStarts(in: content)
+        var lineNumber = lineNumber(forCharacterIndex: firstCharIndex)
 
         let attributes: [NSAttributedString.Key: Any] = [
             .font: NSFont.monospacedDigitSystemFont(ofSize: 10, weight: .regular),
@@ -78,57 +78,42 @@ final class LineNumberRulerView: NSRulerView {
         }
 
         // 标尺厚度随总行数自适应
-        let totalLines = totalLineNumber(in: content)
+        let totalLines = totalLineNumber()
         let desiredWidth = 24 + CGFloat(String(totalLines).count) * 8
         if abs(ruleThickness - desiredWidth) > 2 {
             ruleThickness = desiredWidth
         }
     }
 
-    /// 计算字符索引所在行号（1-based），带增量缓存。
-    private func lineNumber(forCharacterIndex index: Int, in content: NSString) -> Int {
-        if let cached = lineCache[index] { return cached }
-        // 找到最近的缓存锚点
-        let anchors = lineCache.keys.filter { $0 <= index }
-        let anchor = anchors.max() ?? 0
-        var count = lineCache[anchor] ?? 1
-        var position = anchor
-        let searchLength = min(index, content.length) - position
-        if searchLength > 0 {
-            var searchRange = NSRange(location: position, length: searchLength)
-            while position < index {
-                let newlineRange = content.range(of: "\n", options: [], range: searchRange)
-                guard newlineRange.location != NSNotFound, newlineRange.location < index else { break }
-                count += 1
-                position = newlineRange.location + 1
-                searchRange = NSRange(location: position, length: index - position)
-            }
+    private func prepareLineStarts(in content: NSString) {
+        guard lineStartsLength != content.length else { return }
+        lineStarts = [0]
+        var searchStart = 0
+        while searchStart < content.length {
+            let range = NSRange(location: searchStart, length: content.length - searchStart)
+            let found = content.range(of: "\n", options: [], range: range)
+            guard found.location != NSNotFound else { break }
+            let next = found.location + 1
+            if next <= content.length { lineStarts.append(next) }
+            searchStart = next
         }
-        // 控制缓存规模
-        if lineCache.count > 512 {
-            lineCache.removeAll(keepingCapacity: true)
-            lineCache[0] = 1
-        }
-        lineCache[index] = count
-        return count
+        lineStartsLength = content.length
     }
 
-    /// 全文总行数（缓存）。
-    private func totalLineNumber(in content: NSString) -> Int {
-        if let totalCache, totalCache.length == content.length {
-            return totalCache.count
+    /// 计算字符索引所在行号（1-based）。
+    private func lineNumber(forCharacterIndex index: Int) -> Int {
+        let target = max(0, index)
+        var lower = 0
+        var upper = lineStarts.count
+        while lower < upper {
+            let middle = (lower + upper) / 2
+            if lineStarts[middle] <= target { lower = middle + 1 }
+            else { upper = middle }
         }
-        var count = 1
-        var searchRange = NSRange(location: 0, length: content.length)
-        while true {
-            let found = content.range(of: "\n", options: [], range: searchRange)
-            guard found.location != NSNotFound else { break }
-            count += 1
-            let next = found.location + 1
-            if next >= content.length { break }
-            searchRange = NSRange(location: next, length: content.length - next)
-        }
-        totalCache = (content.length, count)
-        return count
+        return max(1, lower)
+    }
+
+    private func totalLineNumber() -> Int {
+        lineStarts.count
     }
 }

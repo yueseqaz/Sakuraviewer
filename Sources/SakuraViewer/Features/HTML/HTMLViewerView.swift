@@ -12,7 +12,13 @@ struct HTMLViewerView: View {
     @StateObject private var model = HTMLViewModel()
 
     var body: some View {
-        HTMLWebView(url: tab.currentURL, reloadToken: tab.reloadToken, model: model)
+        Group {
+            if isActive {
+                HTMLWebView(url: tab.currentURL, reloadToken: tab.reloadToken, model: model)
+            } else {
+                Color.clear
+            }
+        }
             .toolbar { toolbar }
             .onAppear {
                 tab.status = .ready
@@ -20,6 +26,9 @@ struct HTMLViewerView: View {
             }
             .onDisappear {
                 services.router.unregister(tab.id)
+            }
+            .onChange(of: isActive) { active in
+                if active { registerRouter() }
             }
     }
 

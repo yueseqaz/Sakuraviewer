@@ -180,7 +180,10 @@ struct TextViewCanvas: NSViewRepresentable {
             let inset = textView.textContainerInset
             let width = max(scrollView.contentSize.width, used.width + inset.width * 2, 1)
             let height = max(scrollView.contentSize.height, used.height + inset.height * 2, 1)
-            textView.setFrameSize(NSSize(width: width, height: height))
+            let size = NSSize(width: width, height: height)
+            if abs(textView.frame.width - size.width) > 0.5 || abs(textView.frame.height - size.height) > 0.5 {
+                textView.setFrameSize(size)
+            }
         }
 
         // MARK: 搜索

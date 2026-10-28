@@ -25,7 +25,7 @@ struct AudioViewerView: View {
         content
             .toolbar { toolbar }
             .onAppear {
-                if controller.player.currentItem == nil {
+                if isActive, controller.player.currentItem == nil {
                     controller.loadPlaylist(for: tab.currentURL)
                 }
                 registerRouter()
@@ -34,7 +34,14 @@ struct AudioViewerView: View {
                 services.router.unregister(tab.id)
             }
             .onChange(of: tab.reloadToken) { _ in
-                controller.loadPlaylist(for: tab.currentURL)
+                if isActive { controller.loadPlaylist(for: tab.currentURL) }
+            }
+            .onChange(of: isActive) { active in
+                if active {
+                    if controller.player.currentItem == nil { controller.loadPlaylist(for: tab.currentURL) }
+                } else {
+                    controller.pause()
+                }
             }
     }
 

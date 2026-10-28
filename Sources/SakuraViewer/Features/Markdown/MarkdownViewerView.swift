@@ -18,7 +18,7 @@ struct MarkdownViewerView: View {
         content
             .toolbar { toolbar }
             .onAppear {
-                if document == nil, loadError == nil {
+                if isActive, document == nil, loadError == nil {
                     load()
                 }
                 registerRouter()
@@ -27,7 +27,10 @@ struct MarkdownViewerView: View {
                 services.router.unregister(tab.id)
             }
             .onChange(of: tab.reloadToken) { _ in
-                load()
+                if isActive { load() }
+            }
+            .onChange(of: isActive) { active in
+                if active, document == nil, loadError == nil { load() }
             }
     }
 

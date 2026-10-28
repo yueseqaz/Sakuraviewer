@@ -44,7 +44,7 @@ struct TextViewerCoreView: View {
             }
             .onAppear {
                 // TabDocument 初始状态即 .loading，此处以内容为依据触发首次加载
-                if model.attributed.length == 0 {
+                if isActive, model.attributed.length == 0 {
                     model.load()
                 }
                 registerRouter()
@@ -53,7 +53,12 @@ struct TextViewerCoreView: View {
                 services.router.unregister(tab.id)
             }
             .onChange(of: tab.reloadToken) { _ in
-                model.load()
+                if isActive { model.load() }
+            }
+            .onChange(of: isActive) { active in
+                if active, model.attributed.length == 0 {
+                    model.load()
+                }
             }
     }
 

@@ -191,6 +191,18 @@ public enum FileKind: String, CaseIterable, Codable, Sendable {
         }
     }
 
+    /// 根据具体扩展名细分文档图标，避免 Word、表格和演示文稿看起来一样。
+    public static func symbolName(for url: URL) -> String {
+        let ext = url.pathExtension.lowercased()
+        switch ext {
+        case "xls", "xlsx", "xlsm", "ods", "numbers": return "tablecells"
+        case "ppt", "pptx", "pptm", "odp", "key": return "rectangle.split.3x1"
+        case "doc", "docx", "docm", "odt", "pages", "rtf", "rtfd": return "doc.richtext"
+        case "csv", "tsv": return "tablecells"
+        default: return displayKind(url: url).symbolName
+        }
+    }
+
     /// 是否属于可按文本处理的类别。
     public var isTextLike: Bool {
         self == .code || self == .plainText || self == .markdown

@@ -165,7 +165,7 @@ struct ImageViewerView: View {
         content
             .toolbar { toolbar }
             .onAppear {
-                if model.image == nil && model.loadingError == nil {
+                if isActive, model.image == nil && model.loadingError == nil {
                     model.load()
                 }
                 registerRouter()
@@ -174,7 +174,10 @@ struct ImageViewerView: View {
                 services.router.unregister(tab.id)
             }
             .onChange(of: tab.reloadToken) { _ in
-                model.load()
+                if isActive { model.load() }
+            }
+            .onChange(of: isActive) { active in
+                if active, model.image == nil, model.loadingError == nil { model.load() }
             }
     }
 
