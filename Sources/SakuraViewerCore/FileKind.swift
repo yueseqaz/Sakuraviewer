@@ -35,7 +35,7 @@ public enum FileKind: String, CaseIterable, Codable, Sendable {
 
     public static let codeExtensions: Set<String> = [
         "swift", "js", "mjs", "cjs", "ts", "jsx", "tsx", "py", "pyw", "java",
-        "c", "h", "cpp", "cc", "cxx", "hpp", "hh", "go", "rs", "html", "htm",
+        "c", "h", "cpp", "cc", "cxx", "hpp", "hh", "go", "rs", "html", "htm", "xhtml",
         "css", "scss", "less", "json", "jsonc", "yaml", "yml", "xml", "plist",
         "sh", "bash", "zsh", "fish", "sql", "rb", "php", "kt", "kts", "toml",
         "ini", "lua", "pl", "pm", "r", "m", "mm", "cs", "dart", "scala",
@@ -45,6 +45,12 @@ public enum FileKind: String, CaseIterable, Codable, Sendable {
 
     public static let textExtensions: Set<String> = [
         "txt", "text", "log", "csv", "tsv", "cfg", "conf", "properties", "env", "gitignore", "editorconfig",
+    ]
+
+    /// 文档类格式交给系统默认应用打开（Word / Excel / PowerPoint 或兼容软件）。
+    public static let officeExtensions: Set<String> = [
+        "doc", "docx", "docm", "xls", "xlsx", "xlsm", "ppt", "pptx", "pptm",
+        "odt", "ods", "odp", "pages", "numbers", "key",
     ]
 
     /// 无扩展名但应按文本/代码处理的常见文件名。
@@ -80,6 +86,18 @@ public enum FileKind: String, CaseIterable, Codable, Sendable {
         if codeExtensions.contains(ext) { return .code }
         if textExtensions.contains(ext) { return .plainText }
         return nil
+    }
+
+    /// 快速取得文件树展示用类型，不读取未知文件内容，避免滚动文件树时卡顿。
+    public static func displayKind(url: URL) -> FileKind {
+        let ext = url.pathExtension.lowercased()
+        let fileName = url.lastPathComponent.lowercased()
+        if specialFileNames.contains(fileName) { return ext.isEmpty ? .code : (detectByExtension(ext) ?? .code) }
+        return detectByExtension(ext) ?? .unsupported
+    }
+
+    public static func isOfficeDocument(_ url: URL) -> Bool {
+        officeExtensions.contains(url.pathExtension.lowercased())
     }
 
     /// 内容嗅探：读取头部字节。含 NUL 或大量不可打印字节视为二进制；空文件与可解码内容视为文本。

@@ -106,43 +106,48 @@ struct SidebarView: View {
         let isExpanded = expandedFolders.contains(folder.id)
         let nodes = services.folders.treeByFolder[folder.id] ?? []
         return VStack(alignment: .leading, spacing: 2) {
-            HStack(spacing: 7) {
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 8, weight: .bold))
-                    .foregroundColor(.secondary)
-                    .rotationEffect(.degrees(isExpanded ? 90 : 0))
-
-                Image(systemName: "folder.fill")
-                    .font(.system(size: 12))
-                    .foregroundColor(.accentColor)
-
-                Text(folder.name)
-                    .font(.system(size: 12, weight: .medium))
-                    .lineLimit(1)
-
-                Spacer()
-
-                if !isExpanded, !nodes.isEmpty {
-                    Text("\(nodeCount(nodes))")
-                        .font(.system(size: 10, design: .monospaced))
-                        .foregroundColor(.secondary)
-                }
-            }
-            .padding(.horizontal, 8)
-            .padding(.vertical, 5)
-            .background(
-                RoundedRectangle(cornerRadius: SakuraTheme.smallCornerRadius)
-                    .fill(Color.primary.opacity(hoverablePlaceholderOpacity))
-            )
-            .contentShape(Rectangle())
-            .onTapGesture {
+            Button {
                 withAnimation(.easeOut(duration: 0.18)) {
-                    toggleSet(&expandedFolders, folder.id)
-                    if isExpanded == false {
+                    if isExpanded {
+                        expandedFolders.remove(folder.id)
+                    } else {
+                        expandedFolders.insert(folder.id)
                         services.folders.rescan(folder: folder.id)
                     }
                 }
+            } label: {
+                HStack(spacing: 7) {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 8, weight: .bold))
+                        .foregroundColor(.secondary)
+                        .rotationEffect(.degrees(isExpanded ? 90 : 0))
+
+                    Image(systemName: "folder.fill")
+                        .font(.system(size: 12))
+                        .foregroundColor(.accentColor)
+
+                    Text(folder.name)
+                        .font(.system(size: 12, weight: .medium))
+                        .lineLimit(1)
+
+                    Spacer()
+
+                    if !isExpanded, !nodes.isEmpty {
+                        Text("\(nodeCount(nodes))")
+                            .font(.system(size: 10, design: .monospaced))
+                            .foregroundColor(.secondary)
+                    }
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 5)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(
+                    RoundedRectangle(cornerRadius: SakuraTheme.smallCornerRadius)
+                        .fill(Color.primary.opacity(hoverablePlaceholderOpacity))
+                )
+                .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
             .contextMenu {
                 Button("重新扫描") { services.folders.rescan(folder: folder.id) }
                 Divider()
@@ -156,7 +161,7 @@ struct SidebarView: View {
                         placeholder("扫描中…")
                     } else {
                         ForEach(nodes) { node in
-                            treeNodeRow(node, indent: 0)
+                            SidebarTreeNodeView(node: node, indent: 0, expandedNodes: $expandedNodes)
                         }
                     }
                 }
@@ -166,39 +171,55 @@ struct SidebarView: View {
         }
     }
 
-    // MARK: 文件树节点
+    private func nodeCount(_ nodes: [FolderTreeNode]) -> Int {
+        nodes.reduce(0) { total, node in
+            total + (node.isDirectory ? nodeCount(node.children) : 1)
+        }
+    }
 
-    // Recursive SwiftUI views need type erasure to avoid an infinitely nested
-    // opaque return type during release builds.
-    private func treeNodeRow(_ node: FolderTreeNode, indent: Int) -> AnyView {
+}
+
+/// A recursive tree row kept as its own view so folder clicks never bubble
+/// into an ancestor row and release builds keep a finite view type.
+private struct SidebarTreeNodeView: View {
+
+    let node: FolderTreeNode
+    let indent: Int
+    @Binding var expandedNodes: Set<URL>
+    @EnvironmentObject private var workspace: WorkspaceModel
+
+    var body: some View {
         if node.isDirectory {
             let isExpanded = expandedNodes.contains(node.url)
-            return AnyView(VStack(alignment: .leading, spacing: 1) {
-                HStack(spacing: 7) {
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 8, weight: .bold))
-                        .foregroundColor(.secondary)
-                        .rotationEffect(.degrees(isExpanded ? 90 : 0))
-                    Image(systemName: isExpanded ? "folder.fill" : "folder")
-                        .font(.system(size: 12))
-                        .foregroundColor(.accentColor)
-                    Text(node.url.lastPathComponent)
-                        .font(.system(size: 12))
-                        .lineLimit(1)
-                    Spacer()
-                }
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(
-                    RoundedRectangle(cornerRadius: SakuraTheme.smallCornerRadius)
-                        .fill(Color.primary.opacity(hoverablePlaceholderOpacity))
-                )
-                .contentShape(Rectangle())
-                .onTapGesture {
+            VStack(alignment: .leading, spacing: 1) {
+                Button {
                     withAnimation(.easeOut(duration: 0.18)) {
-                        toggleSet(&expandedNodes, node.url)
+                        if isExpanded {
+                            expandedNodes.remove(node.url)
+                        } else {
+                            expandedNodes.insert(node.url)
+                        }
                     }
+                } label: {
+                    HStack(spacing: 7) {
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 8, weight: .bold))
+                            .foregroundColor(.secondary)
+                            .rotationEffect(.degrees(isExpanded ? 90 : 0))
+                        Image(systemName: isExpanded ? "folder.fill" : "folder")
+                            .font(.system(size: 12))
+                            .foregroundColor(.accentColor)
+                        Text(node.url.lastPathComponent)
+                            .font(.system(size: 12))
+                            .lineLimit(1)
+                        Spacer()
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
                 .contextMenu {
                     Button("在 Finder 中显示") {
                         NSWorkspace.shared.activateFileViewerSelecting([node.url])
@@ -208,34 +229,20 @@ struct SidebarView: View {
                 if isExpanded {
                     VStack(alignment: .leading, spacing: 1) {
                         ForEach(node.children) { child in
-                            treeNodeRow(child, indent: indent + 1)
+                            SidebarTreeNodeView(node: child, indent: indent + 1, expandedNodes: $expandedNodes)
                         }
                     }
                     .padding(.leading, 14)
                     .transition(.opacity)
                 }
-            })
+            }
         } else {
-            return AnyView(SidebarFileRow(
+            SidebarFileRow(
                 url: node.url,
-                kind: FileKind.detect(url: node.url),
+                kind: FileKind.displayKind(url: node.url),
                 isSelected: workspace.selectedTab?.currentURL == node.url,
                 indent: indent > 0
-            ))
-        }
-    }
-
-    private func nodeCount(_ nodes: [FolderTreeNode]) -> Int {
-        nodes.reduce(0) { total, node in
-            total + (node.isDirectory ? nodeCount(node.children) : 1)
-        }
-    }
-
-    private func toggleSet<T: Hashable>(_ set: inout Set<T>, _ value: T) {
-        if set.contains(value) {
-            set.remove(value)
-        } else {
-            set.insert(value)
+            )
         }
     }
 }

@@ -5,6 +5,7 @@ enum FileKindTests {
 
     static func runAll() {
         runCase(name, "extensionDetection") { try extensionDetection() }
+        runCase(name, "displayAndOfficeExtensions") { displayAndOfficeExtensions() }
         runCase(name, "specialFileNames") { try specialFileNames() }
         runCase(name, "unknownTextExtensionSniffsAsText") { try unknownTextExtensionSniffsAsText() }
         runCase(name, "unknownBinaryExtensionSniffsAsUnsupported") { try unknownBinaryExtensionSniffsAsUnsupported() }
@@ -40,6 +41,17 @@ enum FileKindTests {
             let url = try tempFile(named: fileName, content: Data("x".utf8))
             check(FileKind.detect(url: url) == expected, "扩展名识别失败：\(fileName)（得到 \(FileKind.detect(url: url))，期望 \(expected)）")
         }
+    }
+
+    static func displayAndOfficeExtensions() {
+        check(FileKind.displayKind(url: URL(fileURLWithPath: "/tmp/index.html")) == .code,
+              "HTML 文件树展示类型应为代码")
+        check(FileKind.isOfficeDocument(URL(fileURLWithPath: "/tmp/report.docx")),
+              "DOCX 应识别为 Office 文档")
+        check(FileKind.isOfficeDocument(URL(fileURLWithPath: "/tmp/budget.xlsx")),
+              "XLSX 应识别为 Office 文档")
+        check(!FileKind.isOfficeDocument(URL(fileURLWithPath: "/tmp/photo.png")),
+              "图片不应识别为 Office 文档")
     }
 
     static func specialFileNames() throws {

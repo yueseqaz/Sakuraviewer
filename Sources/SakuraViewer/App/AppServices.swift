@@ -41,6 +41,13 @@ final class AppServices: ObservableObject {
                 _ = folders.addFolder(url)
                 continue
             }
+            // Office documents are handed to the user's default compatible app;
+            // the viewer still tracks them as recently opened files.
+            if FileKind.isOfficeDocument(url) {
+                NSWorkspace.shared.open(url)
+                recents.add(url)
+                continue
+            }
             files.append(url)
         }
         guard !files.isEmpty else { return }

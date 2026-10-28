@@ -24,6 +24,7 @@
 | 💻 代码 | swift / js / ts / py / java / c / cpp / h / go / rs / html / css / json / yaml / xml / sh / sql 等 60+ 扩展名 | 自研语法高亮（亮/暗双主题）、行号、自动换行开关、字号调整、查找、跳转到行（⌘L） |
 | 📝 文本 | txt / log / csv 等 | UTF-8 / UTF-16LE/BE / GB18030 / Latin-1 编码自动检测、行号、查找 |
 | 📋 Markdown | md / markdown | 原生渲染标题/列表/表格/引用/任务列表/图片/链接，代码块语法高亮，目录侧栏锚点跳转 |
+| 🗂 Office | doc / docx / xls / xlsx / ppt / pptx / odt / ods / odp / pages / numbers / key | 识别后交给系统默认的 Office 兼容应用打开 |
 | ❓ 未知 | 其他 | 尽量按文本打开；二进制显示友好提示 + 头部十六进制预览，可一键尝试以文本打开 |
 
 **通用能力**
