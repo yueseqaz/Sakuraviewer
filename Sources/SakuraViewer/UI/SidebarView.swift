@@ -264,10 +264,11 @@ struct SidebarFileRow: View {
     @State private var hovered = false
 
     var body: some View {
+        let isOffice = FileKind.isOfficeDocument(url)
         HStack(spacing: 8) {
-            Image(systemName: kind.symbolName)
+            Image(systemName: isOffice ? "doc.on.doc" : kind.symbolName)
                 .font(.system(size: 12))
-                .foregroundColor(SakuraTheme.kindColor(kind))
+                .foregroundColor(isOffice ? .blue : SakuraTheme.kindColor(kind))
                 .frame(width: 15)
 
             Text(url.lastPathComponent)
@@ -298,7 +299,7 @@ struct SidebarFileRow: View {
         }
         .help(url.path)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(kind.displayName)文件 \(url.lastPathComponent)")
+        .accessibilityLabel("\(isOffice ? "Office" : kind.displayName)文件 \(url.lastPathComponent)")
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }
