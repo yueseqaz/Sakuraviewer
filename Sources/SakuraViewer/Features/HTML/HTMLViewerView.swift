@@ -34,38 +34,40 @@ struct HTMLViewerView: View {
 
     @ToolbarContentBuilder
     private var toolbar: some ToolbarContent {
-        ToolbarItemGroup(placement: .primaryAction) {
-            Button { model.goBack() } label: {
-                Image(systemName: "chevron.left")
-            }
-            .disabled(!model.canGoBack)
-            .help("后退")
-            .accessibilityLabel("后退")
+        if isActive {
+            ToolbarItemGroup(placement: .primaryAction) {
+                Button { model.goBack() } label: {
+                    Image(systemName: "chevron.left")
+                }
+                .disabled(!model.canGoBack)
+                .help("后退")
+                .accessibilityLabel("后退")
 
-            Button { model.goForward() } label: {
-                Image(systemName: "chevron.right")
-            }
-            .disabled(!model.canGoForward)
-            .help("前进")
-            .accessibilityLabel("前进")
+                Button { model.goForward() } label: {
+                    Image(systemName: "chevron.right")
+                }
+                .disabled(!model.canGoForward)
+                .help("前进")
+                .accessibilityLabel("前进")
 
-            Button { model.reload() } label: {
-                Image(systemName: "arrow.clockwise")
-            }
-            .help("刷新页面")
-            .accessibilityLabel("刷新页面")
+                Button { model.reload() } label: {
+                    Image(systemName: "arrow.clockwise")
+                }
+                .help("刷新页面")
+                .accessibilityLabel("刷新页面")
 
-            Menu {
-                Button("放大") { model.zoom(by: 1.1) }
-                Button("缩小") { model.zoom(by: 0.9) }
-                Button("恢复默认缩放") { model.resetZoom() }
-                Divider()
-                Button("在浏览器打开") { NSWorkspace.shared.open(tab.currentURL) }
-            } label: {
-                Image(systemName: "globe")
+                Menu {
+                    Button("放大") { model.zoom(by: 1.1) }
+                    Button("缩小") { model.zoom(by: 0.9) }
+                    Button("恢复默认缩放") { model.resetZoom() }
+                    Divider()
+                    Button("在浏览器打开") { NSWorkspace.shared.open(tab.currentURL) }
+                } label: {
+                    Image(systemName: "globe")
+                }
+                .help("网页选项")
+                .accessibilityLabel("网页选项")
             }
-            .help("网页选项")
-            .accessibilityLabel("网页选项")
         }
     }
 
