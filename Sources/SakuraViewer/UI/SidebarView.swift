@@ -168,11 +168,12 @@ struct SidebarView: View {
 
     // MARK: 文件树节点
 
-    @ViewBuilder
-    private func treeNodeRow(_ node: FolderTreeNode, indent: Int) -> some View {
+    // Recursive SwiftUI views need type erasure to avoid an infinitely nested
+    // opaque return type during release builds.
+    private func treeNodeRow(_ node: FolderTreeNode, indent: Int) -> AnyView {
         if node.isDirectory {
             let isExpanded = expandedNodes.contains(node.url)
-            VStack(alignment: .leading, spacing: 1) {
+            return AnyView(VStack(alignment: .leading, spacing: 1) {
                 HStack(spacing: 7) {
                     Image(systemName: "chevron.right")
                         .font(.system(size: 8, weight: .bold))
@@ -213,14 +214,14 @@ struct SidebarView: View {
                     .padding(.leading, 14)
                     .transition(.opacity)
                 }
-            }
+            })
         } else {
-            SidebarFileRow(
+            return AnyView(SidebarFileRow(
                 url: node.url,
                 kind: FileKind.detect(url: node.url),
                 isSelected: workspace.selectedTab?.currentURL == node.url,
                 indent: indent > 0
-            )
+            ))
         }
     }
 
