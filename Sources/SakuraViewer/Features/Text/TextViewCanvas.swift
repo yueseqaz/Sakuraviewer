@@ -77,6 +77,11 @@ struct TextViewCanvas: NSViewRepresentable {
             coordinator.appliedFindBackTick = model.findBackTick
             coordinator.gotoMatch(direction: -1)
         }
+        // 跳转到行
+        if coordinator.appliedGotoTick != model.gotoTick {
+            coordinator.appliedGotoTick = model.gotoTick
+            coordinator.scrollToLine(model.pendingLine)
+        }
         // 等宽字体同步
         if !model.wrapEnabled, coordinator.lastContainerWidth != scrollView.contentSize.width {
             coordinator.lastContainerWidth = scrollView.contentSize.width
@@ -102,6 +107,7 @@ struct TextViewCanvas: NSViewRepresentable {
         var appliedWrap: Bool?
         var appliedFindTick = 0
         var appliedFindBackTick = 0
+        var appliedGotoTick = 0
         var lastContainerWidth: CGFloat = 0
 
         private var matches: [NSRange] = []
@@ -222,6 +228,28 @@ struct TextViewCanvas: NSViewRepresentable {
             }
             let current = matches[model.matchIndex]
             storage.addAttribute(.backgroundColor, value: NSColor.systemOrange.withAlphaComponent(0.85), range: current)
+        }
+
+        /// 滚动到指定行（1-based），并选中该行行首便于定位。
+        func scrollToLine(_ line: Int) {
+            guard let textView, line >= 1 else { return }
+            let text = textView.string
+            guard !text.isEmpty else { return }
+            var lineIndex = 1
+            var targetIndex = text.startIndex
+            if line > 1 {
+                var pos = text.startIndex
+                while lineIndex < line {
+                    guard let newline = text[pos...].firstIndex(of: "\n") else { break }
+                    lineIndex += 1
+                    pos = text.index(after: newline)
+                }
+                guard lineIndex == line else { return } // 超出总行数则不动作
+                targetIndex = pos
+            }
+            let location = text.distance(from: text.startIndex, to: targetIndex)
+            textView.setSelectedRange(NSRange(location: location, length: 0))
+            textView.scrollRangeToVisible(NSRange(location: location, length: min(120, max((text as NSString).length - location, 0))))
         }
 
         private func scrollToMatch(_ index: Int) {

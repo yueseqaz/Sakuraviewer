@@ -23,7 +23,7 @@ struct EmptyStateView: View {
             .accessibilityHidden(true)
 
             VStack(spacing: 6) {
-                Text("Sakura Viewer")
+                Text("Sakuraviewer")
                     .font(.system(size: 24, weight: .semibold))
                 Text("一个原生、优雅的 macOS 统一文件查看器")
                     .font(.subheadline)

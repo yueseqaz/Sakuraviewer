@@ -1,4 +1,4 @@
-# 🌸 Sakura-Viewer
+# 🌸 Sakuraviewer
 
 **原生 macOS 统一文件查看器** —— 一个窗口查看图片、视频、音频、PDF、代码、纯文本与 Markdown。
 
@@ -17,11 +17,11 @@
 
 | 类型 | 格式 | 查看能力 |
 |------|------|----------|
-| 🖼 图片 | jpg / jpeg / png / gif / webp / heic / tiff / bmp / svg / ico / avif | 适应窗口、实际大小、缩放（触控板捏合 / ⌘±）、旋转 90°、同目录上一张/下一张、GIF 动画 |
-| 🎬 视频 | mp4 / mov / m4v 等 AVFoundation 可播放格式 | 播放/暂停、进度、音量、循环、同目录播放列表、快进快退、原生 AVKit 控制 |
-| 🎵 音频 | mp3 / m4a / aac / wav / flac / aiff / caf | 自定义原生播放界面、频谱律动、播放列表、循环 |
+| 🖼 图片 | jpg / jpeg / png / gif / webp / heic / tiff / bmp / svg / ico / avif | 适应窗口、实际大小、缩放（触控板捏合 / ⌘±）、旋转 90°、同目录上一张/下一张、GIF 动画、信息面板（格式/尺寸/大小/时间） |
+| 🎬 视频 | mp4 / mov / m4v 等 AVFoundation 可播放格式 | 播放/暂停、进度、音量、循环、播放速度（0.5×–2×）、同目录播放列表、快进快退、原生 AVKit 控制 |
+| 🎵 音频 | mp3 / m4a / aac / wav / flac / aiff / caf | 自定义原生播放界面、频谱律动、播放列表、循环、播放速度（0.5×–2×） |
 | 📄 PDF | pdf | 连续滚动、页码跳转、全文搜索（高亮定位）、缩略图侧栏、缩放 |
-| 💻 代码 | swift / js / ts / py / java / c / cpp / h / go / rs / html / css / json / yaml / xml / sh / sql 等 60+ 扩展名 | 自研语法高亮（亮/暗双主题）、行号、自动换行开关、字号调整、查找替换定位 |
+| 💻 代码 | swift / js / ts / py / java / c / cpp / h / go / rs / html / css / json / yaml / xml / sh / sql 等 60+ 扩展名 | 自研语法高亮（亮/暗双主题）、行号、自动换行开关、字号调整、查找、跳转到行（⌘L） |
 | 📝 文本 | txt / log / csv 等 | UTF-8 / UTF-16LE/BE / GB18030 / Latin-1 编码自动检测、行号、查找 |
 | 📋 Markdown | md / markdown | 原生渲染标题/列表/表格/引用/任务列表/图片/链接，代码块语法高亮，目录侧栏锚点跳转 |
 | ❓ 未知 | 其他 | 尽量按文本打开；二进制显示友好提示 + 头部十六进制预览，可一键尝试以文本打开 |
@@ -46,6 +46,7 @@
 | ⌘W / ⌘⇧W | 关闭标签 / 关闭窗口 |
 | ⌘⇧[ / ⌘⇧] | 上一个 / 下一个标签 |
 | ⌘F | 查找（文本 / 代码 / PDF） |
+| ⌘L | 跳转到行（文本 / 代码） |
 | ⌘+ / ⌘- / ⌘0 / ⌘⇧0 | 放大 / 缩小 / 实际大小 / 适应窗口 |
 | 空格 | 播放 / 暂停媒体 |
 | ← / → | 图片上一张/下一张；媒体快退/快进 10 秒 |
@@ -83,6 +84,16 @@ CI 在 `macos-15` runner 上自动执行：编译（release）→ 测试 → 打
 
 - 状态：见顶部 badge / [Actions 页面](https://github.com/yueseqaz/Sakuraviewer/actions)
 - 下载 App：进入对应 run → Artifacts → `SakuraViewer-macOS`（内含 `SakuraViewer.app` 的 zip），解压双击运行（本机首次打开需右键 → 打开，绕过 Gatekeeper 提示）
+
+## 🚀 Release 发版
+
+推送 `v*` 标签即自动发版（`.github/workflows/release.yml`）：release 构建 → 测试 → 打包签名 → 创建 GitHub Release 并附上 `SakuraViewer-macOS.zip`，Release Notes 自动生成。
+
+```bash
+git tag v0.2.0 && git push origin v0.2.0   # 发一个新版本
+```
+
+发布页：<https://github.com/yueseqaz/Sakuraviewer/releases>
 
 ## 项目结构
 
@@ -135,7 +146,7 @@ Sakuraviewer/
 
 ## 命名说明
 
-任务描述中仓库名存在 `Sakuraviewer` 与 `macos-omni-viewer` 两种表述，产品名有 `Sakura-Viewer` 与 `OmniViewer` 两种表述。按作者既有仓库命名习惯（`Sakura*` 系列）采用 **Sakuraviewer / Sakura-Viewer / SakuraViewer.app**；如需改名/改包名：
+任务描述中仓库名存在 `Sakuraviewer` 与 `macos-omni-viewer` 两种表述，产品名有 `Sakuraviewer` 与 `OmniViewer` 两种表述。按作者既有仓库命名习惯（`Sakura*` 系列）采用 **Sakuraviewer / Sakuraviewer / SakuraViewer.app**；如需改名/改包名：
 
 ```bash
 gh repo rename macos-omni-viewer        # 重命名仓库

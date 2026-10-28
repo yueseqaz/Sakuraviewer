@@ -12,6 +12,8 @@ struct TextViewerCoreView: View {
 
     @StateObject private var model: TextViewModel
     @FocusState private var findFocused: Bool
+    @State private var showGotoAlert = false
+    @State private var gotoText = ""
 
     init(tab: TabDocument, isActive: Bool, language: CodeLanguage, highlightEnabled: Bool) {
         self.tab = tab
@@ -28,6 +30,18 @@ struct TextViewerCoreView: View {
     var body: some View {
         content
             .toolbar { toolbar }
+            .alert("跳转到行", isPresented: $showGotoAlert) {
+                TextField("行号（1 – \(max(model.lineCount, 1))）", text: $gotoText)
+                    .frame(width: 160)
+                Button("跳转") {
+                    if let line = Int(gotoText.trimmingCharacters(in: .whitespaces)) {
+                        model.requestGotoLine(line)
+                    }
+                }
+                Button("取消", role: .cancel) {}
+            } message: {
+                Text("共 \(max(model.lineCount, 1)) 行，输入目标行号后回车。")
+            }
             .onAppear {
                 // TabDocument 初始状态即 .loading，此处以内容为依据触发首次加载
                 if model.attributed.length == 0 {
@@ -115,6 +129,13 @@ struct TextViewerCoreView: View {
 
                 Divider()
 
+                IconButton(systemName: "number", size: 26, iconSize: 12) {
+                    gotoText = ""
+                    showGotoAlert = true
+                }
+                .help("跳转到行（⌘L）")
+                .accessibilityLabel("跳转到行")
+
                 IconButton(systemName: "magnifyingglass", size: 26, iconSize: 12) {
                     showFind()
                 }
@@ -138,7 +159,7 @@ struct TextViewerCoreView: View {
     private func registerRouter() {
         services.router.register(ViewerRegistration(
             tabId: tab.id,
-            capabilities: [.find, .wrap, .font],
+            capabilities: [.find, .wrap, .font, .gotoLine],
             perform: { action in
                 switch action {
                 case .focusFind: showFind()
@@ -147,6 +168,9 @@ struct TextViewerCoreView: View {
                 case .toggleWrap: model.wrapEnabled.toggle()
                 case .increaseFont: model.increaseFont()
                 case .decreaseFont: model.decreaseFont()
+                case .gotoLine:
+                    gotoText = ""
+                    showGotoAlert = true
                 case .refresh: model.load()
                 default: break
                 }

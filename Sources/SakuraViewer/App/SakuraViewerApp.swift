@@ -7,7 +7,7 @@ struct SakuraViewerApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
     var body: some Scene {
-        Window("Sakura Viewer", id: "main") {
+        Window("Sakuraviewer", id: "main") {
             MainWindowView()
                 .environmentObject(AppServices.shared)
                 .environmentObject(AppServices.shared.workspace)
@@ -148,6 +148,12 @@ struct SakuraCommands: Commands {
             }
             .keyboardShortcut("f")
             .accessibilityLabel("查找")
+
+            Button("跳转到行…") {
+                AppServices.shared.router.send(.gotoLine)
+            }
+            .keyboardShortcut("l")
+            .accessibilityLabel("跳转到行")
 
             Button("自动换行") {
                 AppServices.shared.router.send(.toggleWrap)

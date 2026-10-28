@@ -1,4 +1,4 @@
-// scripts/make_icon.swift — 生成 Sakura-Viewer 应用图标
+// scripts/make_icon.swift — 生成 Sakuraviewer 应用图标
 // 用法: swift scripts/make_icon.swift <输出 AppIcon.icns 路径>
 // 纯 CoreGraphics 绘制：粉色渐变圆角方块 + 五瓣樱花（带花瓣缺口），导出各尺寸 PNG 后用 iconutil 合成。
 import Foundation

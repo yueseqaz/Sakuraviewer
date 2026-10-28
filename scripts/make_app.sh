@@ -6,7 +6,7 @@ cd "$(dirname "$0")/.."
 
 CONFIG="${1:?用法: make_app.sh <debug|release> <输出路径.app> [显示名]}"
 APP_PATH="${2:?缺少输出路径}"
-DISPLAY_NAME="${3:-Sakura-Viewer}"
+DISPLAY_NAME="${3:-Sakuraviewer}"
 APP_NAME="$(basename "$APP_PATH" .app)"
 VERSION="0.1.0"
 
@@ -57,7 +57,7 @@ cat > "$APP_PATH/Contents/Info.plist" <<PLIST
     <key>LSApplicationCategoryType</key><string>public.app-category.utilities</string>
     <key>NSHighResolutionCapable</key><true/>
     <key>NSSupportsAutomaticGraphicsSwitching</key><true/>
-    <key>NSHumanReadableCopyright</key><string>Copyright © 2026 Sakura-Viewer Contributors. MIT License.</string>
+    <key>NSHumanReadableCopyright</key><string>Copyright © 2026 Sakuraviewer Contributors. MIT License.</string>
     <key>CFBundleDocumentTypes</key>
     <array>
         <dict>

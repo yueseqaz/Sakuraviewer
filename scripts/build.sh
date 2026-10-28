@@ -1,5 +1,5 @@
 #!/bin/bash
-# Sakura-Viewer 命令行编译脚本（无需 Xcode GUI，仅 Command Line Tools 即可）
+# Sakuraviewer 命令行编译脚本（无需 Xcode GUI，仅 Command Line Tools 即可）
 # 用法: ./scripts/build.sh [debug|release]   默认 debug
 set -euo pipefail
 cd "$(dirname "$0")/.."

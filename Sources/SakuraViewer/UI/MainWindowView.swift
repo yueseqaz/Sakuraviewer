@@ -68,25 +68,16 @@ struct MainWindowView: View {
     }
 
     private var windowTitle: String {
-        guard let tab = workspace.selectedTab else { return "Sakura Viewer" }
-        return "\(tab.title) — Sakura Viewer"
+        guard let tab = workspace.selectedTab else { return "Sakuraviewer" }
+        return "\(tab.title) — Sakuraviewer"
     }
 
     // MARK: 工具栏（全局项；文件类型相关项由各查看器提供）
 
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
+        // 侧边栏切换由 NavigationSplitView 自动提供，避免出现重复按钮。
         ToolbarItemGroup(placement: .navigation) {
-            Button {
-                withAnimation(.easeInOut(duration: 0.18)) {
-                    columnVisibility = columnVisibility == .detailOnly ? .all : .detailOnly
-                }
-            } label: {
-                Image(systemName: "sidebar.left")
-            }
-            .help("显示/隐藏边栏（⌃⌘S）")
-            .accessibilityLabel("切换边栏")
-
             Button {
                 if let urls = FilePicker.pickFiles() {
                     services.open(urls: urls)

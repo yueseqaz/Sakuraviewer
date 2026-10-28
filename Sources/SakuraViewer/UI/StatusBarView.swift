@@ -39,7 +39,7 @@ struct StatusBarView: View {
                         .controlSize(.mini)
                 }
             } else {
-                Text("Sakura Viewer · 就绪")
+                Text("Sakuraviewer · 就绪")
                     .font(.system(size: 11))
                     .foregroundColor(.secondary)
             }

@@ -223,6 +223,20 @@ struct AudioViewerView: View {
                 .help("播放列表")
                 .accessibilityLabel("播放列表")
                 .disabled(controller.tracks.isEmpty)
+
+                Menu {
+                    ForEach([0.5, 0.75, 1.0, 1.25, 1.5, 2.0], id: \.self) { value in
+                        Button(controller.rateLabel(for: Float(value))) {
+                            controller.setRate(Float(value))
+                        }
+                        .disabled(Float(value) == controller.rate)
+                    }
+                } label: {
+                    Text(controller.rateLabel)
+                        .font(.system(size: 11, weight: .medium, design: .monospaced))
+                }
+                .help("播放速度")
+                .accessibilityLabel("播放速度")
             }
         }
     }

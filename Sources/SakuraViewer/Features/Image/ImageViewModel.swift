@@ -27,6 +27,9 @@ final class ImageViewModel: ObservableObject {
     @Published var siblingIndex: Int = -1
     /// 由画布回报的适应窗口比例（用于状态栏显示）。
     @Published var fitScale: Double = 1
+    /// 文件元信息（信息面板用）。
+    @Published var fileSize: Int = 0
+    @Published var modifiedDate: Date?
 
     let tab: TabDocument
     private var loadedRotation: Double = -1
@@ -59,6 +62,9 @@ final class ImageViewModel: ObservableObject {
                     self.formatName = payload.formatName
                     self.isAnimated = payload.isAnimated
                     self.rotation = 0
+                    let attrs = try? FileManager.default.attributesOfItem(atPath: url.path)
+                    self.fileSize = (attrs?[.size] as? NSNumber)?.intValue ?? 0
+                    self.modifiedDate = attrs?[.modificationDate] as? Date
                     self.loadSiblings(around: url)
                     self.tab.status = .ready
                     self.updateStatus()

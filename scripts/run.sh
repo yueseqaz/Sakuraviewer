@@ -1,5 +1,5 @@
 #!/bin/bash
-# 构建并启动 Sakura-Viewer（Debug 构建，最快路径）
+# 构建并启动 Sakuraviewer（Debug 构建，最快路径）
 set -euo pipefail
 cd "$(dirname "$0")/.."
 

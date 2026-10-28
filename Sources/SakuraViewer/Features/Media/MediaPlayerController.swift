@@ -149,6 +149,23 @@ final class MediaPlayerController: NSObject, ObservableObject {
         isLooping.toggle()
     }
 
+    /// 调整播放速度；播放中立即生效，静止时记录待下次播放应用。
+    func setRate(_ newRate: Float) {
+        rate = newRate
+        if player.timeControlStatus == .playing {
+            player.rate = newRate
+        }
+        updateStatus()
+    }
+
+    var rateLabel: String {
+        rateLabel(for: rate)
+    }
+
+    func rateLabel(for value: Float) -> String {
+        value == Float(Int(value)) ? String(format: "%.0f×", value) : String(format: "%.2f×", value)
+    }
+
     var canGoNext: Bool { currentIndex < tracks.count - 1 }
     var canGoPrev: Bool { currentIndex > 0 }
 

@@ -21,6 +21,7 @@ enum ViewerAction {
     case toggleTOC
     case increaseFont
     case decreaseFont
+    case gotoLine
     case refresh
 }
 
@@ -34,6 +35,7 @@ enum ViewerCapability: Hashable {
     case find        // 查找
     case wrap        // 自动换行
     case font        // 字号调整
+    case gotoLine    // 跳转到行
     case thumbnails  // PDF 缩略图
     case toc         // Markdown 目录
 }

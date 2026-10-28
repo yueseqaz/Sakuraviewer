@@ -15,6 +15,9 @@ final class TextViewModel: ObservableObject {
     /// 查找跳转计数器：下一个/上一个各一个。
     @Published var findTick: Int = 0
     @Published var findBackTick: Int = 0
+    /// 跳转到行：pendingLine 为目标行，gotoTick 触发画布滚动。
+    @Published var gotoTick: Int = 0
+    @Published var pendingLine: Int = 1
     @Published var wrapEnabled: Bool = true
     @Published var fontSize: CGFloat
     @Published var lineCount: Int = 0
@@ -76,6 +79,13 @@ final class TextViewModel: ObservableObject {
 
         let highlightNote = (highlightEnabled && fileSize > TextFileLoader.highlightLimit) ? " · 大文件已关闭高亮" : ""
         tab.statusDetail = "\(lineCount.formatted()) 行 · \(encodingName) · \(SakuraFormatter.fileSize(fileSize))\(highlightNote)"
+    }
+
+    // MARK: 跳转到行
+
+    func requestGotoLine(_ line: Int) {
+        pendingLine = max(line, 1)
+        gotoTick += 1
     }
 
     // MARK: 字号

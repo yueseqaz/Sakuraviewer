@@ -150,6 +150,7 @@ struct ImageViewerView: View {
     let isActive: Bool
 
     @StateObject private var model: ImageViewModel
+    @State private var showInfo = false
 
     init(tab: TabDocument, isActive: Bool) {
         self.tab = tab
@@ -243,6 +244,17 @@ struct ImageViewerView: View {
                 IconButton(systemName: "1.magnifyingglass", size: 26, iconSize: 12) { model.actualSize() }
                     .help("实际大小（⌘0）")
                     .accessibilityLabel("实际大小")
+
+                Divider()
+
+                IconButton(systemName: "info.circle", size: 26, iconSize: 12, isActive: showInfo) {
+                    showInfo.toggle()
+                }
+                .help("图片信息")
+                .accessibilityLabel("图片信息")
+                .popover(isPresented: $showInfo, arrowEdge: .bottom) {
+                    ImageInfoPanel(model: model)
+                }
             }
         }
     }

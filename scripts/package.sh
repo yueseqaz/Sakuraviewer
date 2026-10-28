@@ -6,7 +6,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 APP_NAME="${APP_NAME:-SakuraViewer}"
-DISPLAY_NAME="Sakura-Viewer"
+DISPLAY_NAME="Sakuraviewer"
 OUT="dist"
 
 ./scripts/make_app.sh release "$OUT/$APP_NAME.app" "$DISPLAY_NAME"

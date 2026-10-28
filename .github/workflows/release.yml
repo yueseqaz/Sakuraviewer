@@ -1,0 +1,45 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: 构建 · 测试 · 发布 Release
+    runs-on: macos-15
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: 工具链信息
+        run: swift --version
+
+      - name: 编译（release）
+        run: ./scripts/build.sh release
+
+      - name: 运行单元测试
+        run: ./scripts/test.sh
+
+      - name: 打包 SakuraViewer.app
+        run: ./scripts/package.sh
+
+      - name: 验证产物
+        run: |
+          test -d dist/SakuraViewer.app
+          codesign --verify dist/SakuraViewer.app
+          test -f dist/SakuraViewer-macOS.zip
+
+      - name: 发布 GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/SakuraViewer-macOS.zip
+          generate_release_notes: true
+          fail_on_unmatched_files: true
