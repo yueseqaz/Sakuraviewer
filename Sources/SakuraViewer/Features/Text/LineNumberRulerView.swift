@@ -71,12 +71,7 @@ final class LineNumberRulerView: NSRulerView {
             .foregroundColor: NSColor.secondaryLabelColor,
         ]
 
-        var glyphIndex = visibleGlyphRange.location
-        let endGlyph = NSMaxRange(visibleGlyphRange)
-
-        while glyphIndex < endGlyph {
-            var fragmentGlyphRange = NSRange()
-            layoutManager.lineFragmentRect(forGlyphAt: glyphIndex, effectiveRange: &fragmentGlyphRange)
+        layoutManager.enumerateLineFragments(forGlyphRange: visibleGlyphRange) { fragmentRect, _, _, fragmentGlyphRange, _ in
             let fragmentCharRange = layoutManager.characterRange(forGlyphRange: fragmentGlyphRange, actualGlyphRange: nil)
 
             // 只为段落首行绘制（换行续行不加行号）
@@ -84,12 +79,11 @@ final class LineNumberRulerView: NSRulerView {
                 || content.character(at: fragmentCharRange.location - 1) == 0x0A
 
             if isParagraphStart {
-                let fragmentRect = layoutManager.lineFragmentRect(forGlyphAt: glyphIndex, effectiveRange: nil)
                 let y = textView.textContainerInset.height + fragmentRect.minY - visibleRect.minY
                 let label = String(lineNumber)
                 let size = (label as NSString).size(withAttributes: attributes)
                 let drawRect = NSRect(
-                    x: ruleThickness - size.width - 8,
+                    x: self.ruleThickness - size.width - 8,
                     y: y + (fragmentRect.height - size.height) / 2,
                     width: size.width,
                     height: size.height
@@ -97,7 +91,6 @@ final class LineNumberRulerView: NSRulerView {
                 (label as NSString).draw(in: drawRect, withAttributes: attributes)
                 lineNumber += 1
             }
-            glyphIndex = NSMaxRange(fragmentGlyphRange)
         }
 
         // 标尺厚度随总行数自适应
@@ -111,14 +104,13 @@ final class LineNumberRulerView: NSRulerView {
     private func prepareLineStarts(in content: NSString) {
         guard lineStartsLength != content.length else { return }
         lineStarts = [0]
-        var searchStart = 0
-        while searchStart < content.length {
-            let range = NSRange(location: searchStart, length: content.length - searchStart)
-            let found = content.range(of: "\n", options: [], range: range)
-            guard found.location != NSNotFound else { break }
-            let next = found.location + 1
-            if next <= content.length { lineStarts.append(next) }
-            searchStart = next
+        lineStarts.reserveCapacity(min(content.length / 24 + 1, 1_000_000))
+        var index = 0
+        while index < content.length {
+            if content.character(at: index) == 0x0A {
+                lineStarts.append(index + 1)
+            }
+            index += 1
         }
         lineStartsLength = content.length
     }

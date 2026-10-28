@@ -16,6 +16,9 @@ struct TextViewCanvas: NSViewRepresentable {
         // TextKit 1：行号标尺需要稳定的 layout manager
         let storage = NSTextStorage()
         let layoutManager = NSLayoutManager()
+        // Permit TextKit 1 to lay out only the region being viewed instead of
+        // walking the entire file whenever the user reverses direction.
+        layoutManager.allowsNonContiguousLayout = true
         storage.addLayoutManager(layoutManager)
         let container = NSTextContainer(size: scrollView.contentSize)
         container.widthTracksTextView = true
