@@ -10,7 +10,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.setActivationPolicy(.regular)
         AppServices.shared.settings.applyAppearance()
         installKeyMonitor()
+        applyDefaultWindowSizeIfNeeded()
         NSApp.activate(ignoringOtherApps: true)
+    }
+
+    /// 首次启动把主窗口设为默认尺寸 1280×820（标签页与侧边栏在该尺寸下无需滚动）。
+    /// 写入标记后不再覆盖用户的后续调整。
+    private func applyDefaultWindowSizeIfNeeded() {
+        let key = "sakura.window.default.applied"
+        guard !UserDefaults.standard.bool(forKey: key) else { return }
+        UserDefaults.standard.set(true, forKey: key)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+            guard let window = NSApp.keyWindow ?? NSApp.windows.first(where: { $0.isVisible }),
+                  window.frame.width < 1100 else { return }
+            let size = NSSize(width: 1280, height: 820)
+            let screen = window.screen?.visibleFrame ?? NSScreen.main?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1470, height: 923)
+            let origin = NSPoint(
+                x: max(screen.minX, screen.midX - size.width / 2),
+                y: max(screen.minY, screen.midY - size.height / 2)
+            )
+            window.setFrame(NSRect(origin: origin, size: size), display: true, animate: true)
+        }
     }
 
     /// 处理 Finder「打开方式」/ 拖到 Dock 图标 / `open` 命令。

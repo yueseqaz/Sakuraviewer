@@ -50,9 +50,9 @@ private struct TabCellView: View {
                 .accessibilityHidden(true)
 
             Text(tab.title)
-                .font(.system(size: 12, weight: isSelected ? .semibold : .regular))
+                .font(.system(size: 11.5, weight: isSelected ? .semibold : .regular))
                 .lineLimit(1)
-                .frame(maxWidth: 170, alignment: .leading)
+                .frame(maxWidth: 138, alignment: .leading)
 
             CloseButton {
                 withAnimation(.easeOut(duration: 0.14)) {
@@ -61,8 +61,8 @@ private struct TabCellView: View {
             }
             .opacity(isSelected || hovered ? 1 : 0)
         }
-        .padding(.leading, 9)
-        .padding(.trailing, 4)
+        .padding(.leading, 8)
+        .padding(.trailing, 3)
         .frame(height: 30)
         .background(
             RoundedRectangle(cornerRadius: 7)

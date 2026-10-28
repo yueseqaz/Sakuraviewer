@@ -13,7 +13,7 @@ struct SakuraViewerApp: App {
                 .environmentObject(AppServices.shared.workspace)
                 .environmentObject(AppServices.shared.router)
                 .environmentObject(AppServices.shared.settings)
-                .frame(minWidth: 980, minHeight: 620)
+                .frame(minWidth: 980, idealWidth: 1280, maxWidth: .infinity, minHeight: 620, idealHeight: 820, maxHeight: .infinity)
         }
         .windowResizability(.contentMinSize)
         .commands { SakuraCommands() }

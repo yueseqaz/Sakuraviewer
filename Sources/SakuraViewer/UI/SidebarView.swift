@@ -1,58 +1,130 @@
 import SwiftUI
 import SakuraViewerCore
 
-/// 左侧边栏：打开入口、最近文件、收藏、文件夹媒体库（按类型分组）、当前打开。
+/// 左侧边栏：打开入口、最近文件、收藏、文件夹媒体库、当前打开（按类型分组）。
+/// 使用 ScrollView + 自绘分区替代 List：展开与滚动行为完全可控，避免
+/// List 中 DisclosureGroup 与自定义行背景组合产生的展开/复用怪癖。
 struct SidebarView: View {
 
     @EnvironmentObject private var services: AppServices
     @EnvironmentObject private var workspace: WorkspaceModel
 
+    @State private var expandedFolders: Set<URL> = []
+    @State private var expandedGroups: Set<FileKind> = []
+    /// 「当前打开」是核心导航，默认展开所有已有内容的分组。
+    @State private var didSeedGroups = false
+
     var body: some View {
-        List {
-            Section {
-                HStack(spacing: 8) {
-                    sidebarButton("doc", "打开文件") {
-                        if let urls = FilePicker.pickFiles() { services.open(urls: urls) }
+        ScrollView(.vertical, showsIndicators: true) {
+            Color.clear.frame(height: 0)
+                .onAppear { seedGroupsIfNeeded() }
+                .onChange(of: workspace.tabs.count) { _ in seedGroupsIfNeeded() }
+            VStack(alignment: .leading, spacing: 18) {
+                actionsRow
+
+                sidebarSection("最近文件") {
+                    if services.recents.urls.isEmpty {
+                        placeholder("暂无记录")
                     }
-                    sidebarButton("folder", "打开文件夹") {
-                        if let url = FilePicker.pickFolder() { services.open(urls: [url]) }
-                    }
-                    sidebarButton("clock.arrow.circlepath", "清理失效的最近文件") {
-                        services.recents.purgeMissing()
+                    ForEach(services.recents.urls, id: \.absoluteString) { url in
+                        SidebarFileRow(
+                            url: url,
+                            kind: FileKind.detect(url: url),
+                            isSelected: workspace.selectedTab?.originURL == url
+                        )
                     }
                 }
-                .padding(.vertical, 2)
+
+                sidebarSection("收藏") {
+                    if services.favorites.urls.isEmpty {
+                        placeholder("右键文件可添加收藏")
+                    }
+                    ForEach(services.favorites.urls, id: \.absoluteString) { url in
+                        SidebarFileRow(
+                            url: url,
+                            kind: FileKind.detect(url: url),
+                            isSelected: workspace.selectedTab?.originURL == url
+                        )
+                    }
+                }
+
+                sidebarSection("文件夹") {
+                    if services.folders.folders.isEmpty {
+                        placeholder("⌘⇧O 添加文件夹")
+                    }
+                    ForEach(services.folders.folders) { folder in
+                        folderRow(folder)
+                    }
+                }
+
+                sidebarSection("当前打开") {
+                    if workspace.tabs.isEmpty {
+                        placeholder("尚未打开文件")
+                    }
+                    let groups = groupedOpenTabs
+                    if groups.isEmpty && !workspace.tabs.isEmpty {
+                        placeholder("整理中…")
+                    }
+                    ForEach(groups, id: \.0) { kind, tabs in
+                        openGroupRow(kind: kind, tabs: tabs)
+                    }
+                }
             }
-
-            recentsSection
-
-            favoritesSection
-
-            folderSection
-
-            openTabsSection
+            .padding(.horizontal, 12)
+            .padding(.top, 12)
+            .padding(.bottom, 24)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .listStyle(.sidebar)
-        .scrollContentBackground(.hidden)
-        .navigationTitle("")
+        .animation(.easeOut(duration: 0.18), value: expandedFolders)
+        .animation(.easeOut(duration: 0.18), value: expandedGroups)
+        .animation(.easeOut(duration: 0.18), value: workspace.tabs.map(\.id))
+        .animation(.easeOut(duration: 0.18), value: services.recents.urls)
     }
 
-    // MARK: 通用小组件
+    /// 新打开的文件类型自动展开对应分组（不折叠用户手动收起的分组）。
+    private func seedGroupsIfNeeded() {
+        guard !didSeedGroups else {
+            for tab in workspace.tabs where !expandedGroups.contains(tab.kind) {
+                expandedGroups.insert(tab.kind)
+            }
+            return
+        }
+        didSeedGroups = true
+        for tab in workspace.tabs {
+            expandedGroups.insert(tab.kind)
+        }
+    }
 
-    private func sidebarButton(_ system: String, _ help: String, action: @escaping () -> Void) -> some View {
+    // MARK: 打开操作行
+
+    private var actionsRow: some View {
+        HStack(spacing: 8) {
+            actionButton("doc", "打开文件") {
+                if let urls = FilePicker.pickFiles() { services.open(urls: urls) }
+            }
+            actionButton("folder", "打开文件夹") {
+                if let url = FilePicker.pickFolder() { services.open(urls: [url]) }
+            }
+            actionButton("clock.arrow.circlepath", "清理失效") {
+                services.recents.purgeMissing()
+            }
+        }
+    }
+
+    private func actionButton(_ system: String, _ help: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            HStack(spacing: 6) {
+            HStack(spacing: 5) {
                 Image(systemName: system)
-                    .font(.system(size: 11))
-                Text(help)
-                    .font(.system(size: 12))
+                    .font(.system(size: 10.5))
+                Text(help == "清理失效" ? "清理失效" : help)
+                    .font(.system(size: 11.5))
                     .lineLimit(1)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 5)
+            .padding(.vertical, 6)
             .background(
                 RoundedRectangle(cornerRadius: SakuraTheme.smallCornerRadius)
-                    .fill(Color.primary.opacity(0.05))
+                    .fill(Color.primary.opacity(0.06))
             )
         }
         .buttonStyle(.plain)
@@ -60,119 +132,156 @@ struct SidebarView: View {
         .accessibilityLabel(help)
     }
 
-    private func fileRow(_ url: URL, isSelected: Bool, onRemove: (() -> Void)? = nil) -> some View {
-        let kind = FileKind.detect(url: url)
-        return HStack(spacing: 8) {
-            Image(systemName: kind.symbolName)
-                .font(.system(size: 12))
-                .foregroundColor(SakuraTheme.kindColor(kind))
-                .frame(width: 16)
-            VStack(alignment: .leading, spacing: 1) {
-                Text(url.deletingPathExtension().lastPathComponent)
-                    .font(.system(size: 12))
-                    .lineLimit(1)
-                Text(url.deletingLastPathComponent().path)
-                    .font(.system(size: 10))
+    // MARK: 通用构件
+
+    private func sidebarSection<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title)
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundColor(.secondary)
+                .padding(.leading, 6)
+                .padding(.bottom, 4)
+            content()
+        }
+    }
+
+    private func placeholder(_ text: String) -> some View {
+        Text(text)
+            .font(.system(size: 11))
+            .foregroundColor(.secondary.opacity(0.65))
+            .padding(.leading, 6)
+            .padding(.vertical, 3)
+    }
+
+    // MARK: 文件夹（自定义展开）
+
+    private func folderRow(_ folder: FolderEntry) -> some View {
+        let isExpanded = expandedFolders.contains(folder.id)
+        let files = services.folders.filesByFolder[folder.id] ?? []
+        return VStack(alignment: .leading, spacing: 2) {
+            HStack(spacing: 7) {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 8, weight: .bold))
                     .foregroundColor(.secondary)
+                    .rotationEffect(.degrees(isExpanded ? 90 : 0))
+
+                Image(systemName: "folder.fill")
+                    .font(.system(size: 12))
+                    .foregroundColor(.accentColor)
+
+                Text(folder.name)
+                    .font(.system(size: 12, weight: .medium))
                     .lineLimit(1)
-                    .truncationMode(.head)
+
+                Spacer()
+
+                if !isExpanded, !files.isEmpty {
+                    Text("\(files.count)")
+                        .font(.system(size: 10, design: .monospaced))
+                        .foregroundColor(.secondary)
+                }
             }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .sidebarRowStyle(selected: isSelected)
-        .contentShape(Rectangle())
-        .onTapGesture {
-            services.open(urls: [url])
-        }
-        .contextMenu {
-            if let onRemove {
-                Button("从列表中移除", action: onRemove)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 5)
+            .background(
+                RoundedRectangle(cornerRadius: SakuraTheme.smallCornerRadius)
+                    .fill(Color.primary.opacity(hoverablePlaceholderOpacity))
+            )
+            .contentShape(Rectangle())
+            .onTapGesture {
+                withAnimation(.easeOut(duration: 0.18)) {
+                    toggleSet(&expandedFolders, folder.id)
+                    if isExpanded == false {
+                        services.folders.rescan(folder: folder.id)
+                    }
+                }
+            }
+            .contextMenu {
+                Button("重新扫描") { services.folders.rescan(folder: folder.id) }
                 Divider()
+                Button("从侧边栏移除") { services.folders.removeFolder(folder.id) }
             }
-            Button("在 Finder 中显示") {
-                NSWorkspace.shared.activateFileViewerSelecting([url])
-            }
-            Button(services.favorites.isFavorite(url) ? "取消收藏" : "添加到收藏") {
-                services.favorites.toggle(url)
+            .help(folder.id.path)
+
+            if isExpanded {
+                VStack(alignment: .leading, spacing: 1) {
+                    if files.isEmpty {
+                        placeholder("扫描中…")
+                    } else {
+                        ForEach(files.prefix(300), id: \.absoluteString) { url in
+                            SidebarFileRow(
+                                url: url,
+                                kind: FileKind.detect(url: url),
+                                isSelected: workspace.selectedTab?.currentURL == url,
+                                indent: true
+                            )
+                        }
+                        if files.count > 300 {
+                            placeholder("已显示前 300 个文件")
+                        }
+                    }
+                }
+                .padding(.leading, 14)
+                .transition(.opacity)
             }
         }
-        .help(url.path)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(kind.displayName)文件 \(url.lastPathComponent)")
-        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 
-    // MARK: 最近文件
+    // MARK: 当前打开（按类型分组，自定义展开）
 
-    private var recentsSection: some View {
-        Section("最近文件") {
-            if services.recents.urls.isEmpty {
-                Text("暂无记录")
-                    .font(.system(size: 11))
-                    .foregroundColor(.secondary.opacity(0.7))
+    private func openGroupRow(kind: FileKind, tabs: [TabDocument]) -> some View {
+        let isExpanded = expandedGroups.contains(kind)
+        return VStack(alignment: .leading, spacing: 2) {
+            HStack(spacing: 7) {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 8, weight: .bold))
+                    .foregroundColor(.secondary)
+                    .rotationEffect(.degrees(isExpanded ? 90 : 0))
+
+                Image(systemName: kind.symbolName)
+                    .font(.system(size: 12))
+                    .foregroundColor(SakuraTheme.kindColor(kind))
+
+                Text(kind.displayName)
+                    .font(.system(size: 12, weight: .medium))
+
+                Spacer()
+
+                Text("\(tabs.count)")
+                    .font(.system(size: 10, design: .monospaced))
+                    .foregroundColor(.secondary)
             }
-            ForEach(services.recents.urls, id: \.absoluteString) { url in
-                fileRow(url, isSelected: workspace.selectedTab?.originURL == url) {
-                    services.recents.remove(url)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 5)
+            .background(
+                RoundedRectangle(cornerRadius: SakuraTheme.smallCornerRadius)
+                    .fill(Color.primary.opacity(hoverablePlaceholderOpacity))
+            )
+            .contentShape(Rectangle())
+            .onTapGesture {
+                withAnimation(.easeOut(duration: 0.18)) {
+                    toggleSet(&expandedGroups, kind)
                 }
             }
-        }
-    }
 
-    // MARK: 收藏
-
-    private var favoritesSection: some View {
-        Section("收藏") {
-            if services.favorites.urls.isEmpty {
-                Text("右键文件可添加收藏")
-                    .font(.system(size: 11))
-                    .foregroundColor(.secondary.opacity(0.7))
-            }
-            ForEach(services.favorites.urls, id: \.absoluteString) { url in
-                fileRow(url, isSelected: workspace.selectedTab?.originURL == url) {
-                    services.favorites.remove(url)
-                }
-            }
-        }
-    }
-
-    // MARK: 文件夹媒体库
-
-    private var folderSection: some View {
-        Section("文件夹") {
-            if services.folders.folders.isEmpty {
-                Text("⌘⇧O 添加文件夹")
-                    .font(.system(size: 11))
-                    .foregroundColor(.secondary.opacity(0.7))
-            }
-            ForEach(services.folders.folders) { folder in
-                FolderDisclosureView(folder: folder)
-            }
-        }
-    }
-
-    // MARK: 当前打开（按类型分组）
-
-    private var openTabsSection: some View {
-        Section("当前打开") {
-            if workspace.tabs.isEmpty {
-                Text("尚未打开文件")
-                    .font(.system(size: 11))
-                    .foregroundColor(.secondary.opacity(0.7))
-            }
-            ForEach(groupedOpenTabs, id: \.0) { group in
-                DisclosureGroup {
-                    ForEach(group.1) { tab in
-                        HStack(spacing: 8) {
+            if isExpanded {
+                VStack(alignment: .leading, spacing: 1) {
+                    ForEach(tabs) { tab in
+                        HStack(spacing: 7) {
                             Circle()
                                 .fill(SakuraTheme.kindColor(tab.kind))
                                 .frame(width: 5, height: 5)
                             Text(tab.title)
-                                .font(.system(size: 12))
+                                .font(.system(size: 11.5))
                                 .lineLimit(1)
                         }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .sidebarRowStyle(selected: workspace.selectedTabId == tab.id)
+                        .background(
+                            RoundedRectangle(cornerRadius: SakuraTheme.smallCornerRadius)
+                                .fill(workspace.selectedTabId == tab.id ? SakuraTheme.accentSoft : Color.clear)
+                        )
                         .contentShape(Rectangle())
                         .onTapGesture {
                             workspace.selectedTabId = tab.id
@@ -180,15 +289,9 @@ struct SidebarView: View {
                         .accessibilityElement(children: .ignore)
                         .accessibilityLabel("打开的\(tab.kind.displayName)：\(tab.title)")
                     }
-                } label: {
-                    HStack(spacing: 8) {
-                        Image(systemName: group.0.symbolName)
-                            .font(.system(size: 12))
-                            .foregroundColor(SakuraTheme.kindColor(group.0))
-                        Text("\(group.0.displayName) · \(group.1.count)")
-                            .font(.system(size: 12, weight: .medium))
-                    }
                 }
+                .padding(.leading, 14)
+                .transition(.opacity)
             }
         }
     }
@@ -203,77 +306,80 @@ struct SidebarView: View {
             return (kind, tabs)
         }
     }
+
+    private func toggleSet<T: Hashable>(_ set: inout Set<T>, _ value: T) {
+        if set.contains(value) {
+            set.remove(value)
+        } else {
+            set.insert(value)
+        }
+    }
 }
 
-/// 文件夹展开行：按类型分组列出其中的文件。
-private struct FolderDisclosureView: View {
+/// 行背景的默认透明度（hover 由 SidebarHoverBackground 单独处理）。
+private let hoverablePlaceholderOpacity: Double = 0
+
+// MARK: - 文件行
+
+struct SidebarFileRow: View {
+
+    let url: URL
+    let kind: FileKind
+    let isSelected: Bool
+    var indent = false
 
     @EnvironmentObject private var services: AppServices
-    let folder: FolderEntry
-
-    @State private var expanded = false
+    @EnvironmentObject private var workspace: WorkspaceModel
+    @State private var hovered = false
 
     var body: some View {
-        DisclosureGroup(isExpanded: $expanded) {
-            let files = services.folders.filesByFolder[folder.id] ?? []
-            if files.isEmpty {
-                Text("扫描中…")
-                    .font(.system(size: 11))
-                    .foregroundColor(.secondary.opacity(0.7))
-            } else {
-                ForEach(groupByKind(files), id: \.0) { kind, urls in
-                    DisclosureGroup {
-                        ForEach(urls, id: \.absoluteString) { url in
-                            Text(url.lastPathComponent)
-                                .font(.system(size: 11.5))
-                                .lineLimit(1)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(.leading, 8)
-                                .sidebarRowStyle(selected: false)
-                                .contentShape(Rectangle())
-                                .onTapGesture {
-                                    services.open(urls: [url])
-                                }
-                                .help(url.path)
-                        }
-                    } label: {
-                        Label("\(kind.displayName) · \(urls.count)", systemImage: kind.symbolName)
-                            .font(.system(size: 11.5))
-                            .foregroundColor(.secondary)
-                    }
-                    .padding(.leading, 4)
-                }
-            }
-        } label: {
-            HStack(spacing: 8) {
-                Image(systemName: "folder.fill")
-                    .font(.system(size: 12))
-                    .foregroundColor(.accentColor)
-                Text(folder.name)
-                    .font(.system(size: 12, weight: .medium))
+        HStack(spacing: 8) {
+            Image(systemName: kind.symbolName)
+                .font(.system(size: 12))
+                .foregroundColor(SakuraTheme.kindColor(kind))
+                .frame(width: 15)
+
+            VStack(alignment: .leading, spacing: 1) {
+                Text(url.deletingPathExtension().lastPathComponent)
+                    .font(.system(size: 12, weight: isSelected ? .medium : .regular))
+                    .foregroundColor(isSelected ? .primary : .primary.opacity(0.85))
                     .lineLimit(1)
+                Text(url.deletingLastPathComponent().path)
+                    .font(.system(size: 9.5))
+                    .foregroundColor(.secondary.opacity(0.75))
+                    .lineLimit(1)
+                    .truncationMode(.head)
             }
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .padding(.leading, indent ? 8 : 0)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: SakuraTheme.smallCornerRadius)
+                .fill(isSelected ? SakuraTheme.accentSoft : Color.primary.opacity(hovered ? 0.06 : 0))
+        )
+        .contentShape(Rectangle())
+        .onHover { hovered = $0 }
+        .onTapGesture {
+            services.open(urls: [url])
         }
         .contextMenu {
-            Button("重新扫描") {
-                services.folders.rescan(folder: folder.id)
+            Button("从列表中移除") {
+                services.recents.remove(url)
+                services.favorites.remove(url)
             }
             Divider()
-            Button("从侧边栏移除") {
-                services.folders.removeFolder(folder.id)
+            Button("在 Finder 中显示") {
+                NSWorkspace.shared.activateFileViewerSelecting([url])
+            }
+            Button(services.favorites.isFavorite(url) ? "取消收藏" : "添加到收藏") {
+                services.favorites.toggle(url)
             }
         }
-        .help(folder.id.path)
-    }
-
-    private func groupByKind(_ urls: [URL]) -> [(FileKind, [URL])] {
-        var buckets: [FileKind: [URL]] = [:]
-        for url in urls {
-            buckets[FileKind.detect(url: url), default: []].append(url)
-        }
-        return FileKind.allCases.compactMap { kind in
-            guard let list = buckets[kind], !list.isEmpty else { return nil }
-            return (kind, list)
-        }
+        .help(url.path)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(kind.displayName)文件 \(url.lastPathComponent)")
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }
